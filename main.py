@@ -167,7 +167,7 @@ class MinervaApp(ctk.CTk):
                      text_color="red", font=("Roboto", 14)).pack(pady=(0, 20))
 
         # Body
-        ctk.CTkLabel(self.main_container, text="Usuário:", font=self.font_label).pack(pady=(5, 0))
+        ctk.CTkLabel(self.main_container, text="Usuário (CPF):", font=self.font_label).pack(pady=(5, 0))
         val_cmd = self.register(self.limitar_caracteres)
         self.entry_user = ctk.CTkEntry(self.main_container, width=300, height=40, validate="key", validatecommand=(val_cmd, '%P'))
         self.entry_user.pack(pady=(2, 10))

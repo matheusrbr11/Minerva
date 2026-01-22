@@ -972,6 +972,7 @@ class Siafe:
                         self.selecionar(xpaths_pdt.detalhamento_fonte_favorecida, dict_contabil["DetalhamentoFonte"])
                         time.sleep(0.3)
                         self.selecionar(xpaths_pdt.convenio_favorecida, dict_contabil["Convenio"])
+                        time.sleep(0.6)
                         self.digitar(xpaths_pdt.competencia, row["data"][-7:])
                         
                         if dict_contabil.get("JustificativaRegularizacao"):

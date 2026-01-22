@@ -954,20 +954,9 @@ class Siafe:
                         self.selecionar(xpaths_pdt.fonte_rj_origem, dict_contabil["FonteRJ"])
                         self.selecionar(xpaths_pdt.tipo_detalhamento_fonte_origem, dict_contabil["TipoDetalhamentoFonte"])
                         self.selecionar(xpaths_pdt.detalhamento_fonte_origem, dict_contabil["DetalhamentoFonte"])
-                        
+                        self.selecionar(xpaths_pdt.convenio_origem, dict_contabil["Convenio"])
                         self.digitar(xpaths_pdt.domicilio_bancario_favorecida, dict_contabil["DomicilioBancarioDestino"])
                         self.clicar(xpaths_pdt.domicilio_bancario_favorecida_pesquisar)
-                        
-                        erro_encontrado = False
-                        for _ in range(2):
-                            try:
-                                erro = WebDriverWait(self.driver, 1.0).until(EC.presence_of_element_located((By.XPATH, xpaths_pdt.erro_pesquisar_domicilio_destino))).text
-                                if erro: 
-                                    self.clicar(xpaths_pdt.btn_erro_pesquisar_domicilio_destino)
-                                    erro_encontrado = True
-                                    break
-                            except: pass
-                        if erro_encontrado: pass
                         
                         if "BCO AUTENT" in dict_contabil.get("DomicilioBancarioDestinoCompleto", ""):
                             time.sleep(0.3)

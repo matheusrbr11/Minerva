@@ -419,21 +419,23 @@ class MinervaApp(ctk.CTk):
 
         except (NoSuchElementException, SessionNotCreatedException, InvalidSessionIdException) as e:
             self.log(f"Ocorreu um erro crítico com o navegador.\nPor favor, reinicie o programa.")
+            if self.stop_event: return
             raise e
 
         except Exception as e:
             if not self.stop_event:
                 self.log(f"Ocorreu um erro inesperado.")
                 self.messagebox_error("Erro", f"Ocorreu um erro inesperado: {e}")
+                if self.stop_event: return
         
         finally:
-            if self.stop_event: return
             self.log("Fechando navegador...")
             self.siafe.fechar_driver()
             self.progress.stop()
             self.progress.configure(mode="determinate")
             self.progress.set(1)
             self.log("Programa Encerrado...")
+        if self.stop_event: return
 
     # =========================================================================
     # DADOS ESTRUTURAIS

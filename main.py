@@ -23,6 +23,8 @@ class MinervaApp(ctk.CTk):
     def __init__(self):
         super().__init__()
         
+        self.siafeVersao = 2  # Versão do SIAFE a ser utilizada (1 para SIAFE-Rio2 ou 2 para SIAFE-Rio2 BETA)
+        
         # --- Paths ---
         self.DBPath = PROJECT_BASE_PATH / "base de dados" / "DAF.db"
         self.IconPath = PROJECT_BASE_PATH / "img/icon.ico"
@@ -403,7 +405,7 @@ class MinervaApp(ctk.CTk):
             if self.stop_event: return
 
             self.log("Iniciando Contabilização...")
-            if self.siafe.logar_siafe(2, self.usuario_siafe, self.senha_siafe):
+            if self.siafe.logar_siafe(self.siafeVersao, self.usuario_siafe, self.senha_siafe):
                 sucesso = metodo_siafe(df, dict_map, callback_sucesso=self.atualizar_banco)
 
                 if sucesso:

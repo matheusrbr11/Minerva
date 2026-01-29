@@ -228,6 +228,7 @@ class MinervaApp(ctk.CTk):
                                          command=self.iniciar_daf_thread)
         self.btn_daf.pack(pady=(5, 15))
 
+
         # --- ÁREA 2: CONTABILIZAÇÃO (Siafe) ---
         frame_contab = ctk.CTkFrame(self.main_container, fg_color="transparent")
         frame_contab.pack(fill="x", pady=10)

@@ -371,7 +371,7 @@ class MinervaApp(ctk.CTk):
                     # IDs 1 a 10 são Receitas
                     df = pd.read_sql_query("SELECT * FROM contabilizacoes WHERE num_documento IS NULL AND tipo_id IN (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)", con)
                     dict_map = self.dict_map_gr
-                    metodo_siafe = self.siafe.gerar_gr_orcamentario
+                    metodo_siafe = self.siafe.gerar_gr
                     tipo_doc = "Guia de Recolhimento"
                     
                 elif "PASEP (PD)" in self.opcao_selecionada:

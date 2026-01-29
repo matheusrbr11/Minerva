@@ -384,6 +384,7 @@ class MinervaApp(ctk.CTk):
 
             if df.empty:
                 self.log(f"Nenhum lançamento pendente encontrado para {tipo_doc}.")
+                self.label.set(f"Processado... (100%)")
                 self.progress.stop()
                 self.progress.set(1)
                 self.messagebox_info("Aviso", "Não há lançamentos pendentes para processar.")

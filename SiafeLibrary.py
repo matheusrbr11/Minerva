@@ -139,13 +139,11 @@ class Siafe:
         return None
     
     def erro_pesquisa(self, xpath_erro, xpath_btn_fechar):
-        if self.wait:
-            try:
-                if self.driver.find_elements(By.XPATH, xpath_erro):
-                    self.clicar(xpath_btn_fechar)
-                    return True
-            except: pass
-        return False
+        try:
+            if self.driver.find_elements(By.XPATH, xpath_erro):
+                self.clicar(xpath_btn_fechar)
+                return True
+        except: pass
 
     def is_selected(self, xpath):
         if self.wait:
@@ -287,8 +285,7 @@ class Siafe:
                             self.clicar(xpaths_gr.ug_orcamentaria_pesquisar)
                             self.erro_pesquisa(xpaths_gr.erro_pesquisar_ugo, xpaths_gr.btn_erro_pesquisar_ugo)
                             
-                            self.selecionar_texto(xpaths_gr.ief, dict_contabil["IEF"])
-
+                        self.selecionar_texto(xpaths_gr.ief, dict_contabil["IEF"])
                         self.selecionar_texto(xpaths_gr.fonte, dict_contabil["Fonte"])
                         self.selecionar_texto(xpaths_gr.fonte_rj, dict_contabil["FonteRJ"])
                         self.selecionar_texto(xpaths_gr.tipo_detalhamento_fonte, dict_contabil["TipoDetalhamentoFonte"])
@@ -333,11 +330,6 @@ class Siafe:
                                 self.digitar(xpaths_gr.credor_extra, dict_contabil["Credor"])
                                 self.clicar(xpaths_gr.credor_pesquisar_extra)
                                 self.wait.until(lambda d: self.obter_atributo(xpaths_gr.credor_nome_extra, "value") != "")
-                                
-                                # Validação Extra
-                                if not self.verificar_texto_digitado(xpaths_gr.valor_extra, row["valor_str"]):
-                                     raise Exception("Falha Valor Extra")
-                                
                                 self.clicar(xpaths_gr.btn_confirmar_item)
 
                             else:
@@ -349,14 +341,10 @@ class Siafe:
                                 self.selecionar_texto(xpaths_gr.tipo_patrimonial_orc, dict_contabil["TipoPatrimonial"])
                                 self.selecionar_texto(xpaths_gr.item_patrimonial_orc, dict_contabil["ItemPatrimonial"])
                                 self.selecionar_texto(xpaths_gr.operacao_patrimonial_orc, dict_contabil["OperacaoPatrimonial"]) 
+                                time.sleep(1)
                                 self.selecionar_texto(xpaths_gr.natureza_receita_orc, dict_contabil["NaturezaReceita"])
-                                time.sleep(3) # Tempo para o SIAFE carregar a natureza
+                                time.sleep(5) # Tempo para o SIAFE carregar a natureza
                                 self.digitar(xpaths_gr.valor_orc, row["valor_str"])
-                                
-                                # Validação Orçamentária
-                                if not self.verificar_texto_digitado(xpaths_gr.valor_orc, row["valor_str"]):
-                                     raise Exception("Falha Valor Orcamentario")
-
                                 self.clicar(xpaths_gr.btn_confirmar_item_orc)
                         
                         except (Exception, WebDriverException):
@@ -594,6 +582,7 @@ class Siafe:
                         if "BCO AUTENT" in dict_contabil.get("DomicilioBancarioDestinoCompleto", ""):
                             time.sleep(0.3); self.clicar(xpaths_pdt.tab_bco_autent); time.sleep(0.3); self.clicar(xpaths_pdt.tab_ok); time.sleep(0.3)
 
+                        time.sleep(0.6)
                         self.selecionar_texto(xpaths_pdt.ief_favorecida, dict_contabil["IEF"])
                         self.selecionar_texto(xpaths_pdt.fonte_favorecida, dict_contabil["Fonte"])
                         self.selecionar_texto(xpaths_pdt.fonte_rj_favorecida, dict_contabil["FonteRJ"])
@@ -601,9 +590,10 @@ class Siafe:
                         self.selecionar_texto(xpaths_pdt.detalhamento_fonte_favorecida, dict_contabil["DetalhamentoFonte"])
                         time.sleep(0.3)
                         self.selecionar_texto(xpaths_pdt.convenio_favorecida, dict_contabil["Convenio"])
-                        time.sleep(0.6)
-                        self.digitar(xpaths_pdt.competencia, row["data"][-7:])
-                        
+                        time.sleep(0.3)
+                        competencia = row["data"][-7:]
+                        self.digitar(xpaths_pdt.competencia, competencia)
+
                         if dict_contabil.get("JustificativaRegularizacao"):
                             self.digitar(xpaths_pdt.justificativa_regularizacao, dict_contabil["JustificativaRegularizacao"])
 
@@ -627,7 +617,7 @@ class Siafe:
                             else:
                                 self.selecionar_texto(xpaths_pdt.operacao_patrimonial, dict_contabil["OperacaoPatrimonial"])
                             
-                            time.sleep(0.6)
+                            time.sleep(1)
                             self.digitar(xpaths_pdt.valor, row["valor_str"])
 
                             # Validações Item

@@ -286,6 +286,9 @@ def carregar_no_banco_de_dados(vfinal_total: pd.DataFrame) -> int:
     Limpa o DataFrame final e insere os novos
     lançamentos na tabela 'contabilizacoes'.
     """    
+    if vfinal_total is None or vfinal_total.empty:
+        return 0
+    
     vfinal_total['data'] = vfinal_total['data'].str.strip()
     vfinal_total['observacao'] = vfinal_total['observacao'].str.strip()
     vfinal_total = vfinal_total[vfinal_total['valor'] != '0.00']

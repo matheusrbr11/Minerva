@@ -31,6 +31,7 @@ class MinervaApp(ctk.CTk):
         self.ImagePath = PROJECT_BASE_PATH / "img/tesouro.png"
         self.VoltarPath = PROJECT_BASE_PATH / "img/voltar.png"
         self.ManualPath = PROJECT_BASE_PATH / "Minerva Manual de Uso.pdf"
+        self.DAFPath = PROJECT_BASE_PATH / "DAF.py"
         
         # --- Configuração da Janela ---
         self.title("Programa Minerva")
@@ -264,7 +265,7 @@ class MinervaApp(ctk.CTk):
         threading.Thread(target=self.executar_daf, daemon=True).start()
 
     def executar_daf(self):
-        subprocess.run(["python", "DAF.py"])
+        subprocess.run(["python", self.DAFPath])
 
     def iniciar_execucao(self):
         self.show_execucao_frame()

@@ -4,6 +4,7 @@ import shutil
 import json
 import subprocess
 import sys
+from pathlib import Path
 from office365.sharepoint.client_context import ClientContext
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -113,4 +114,5 @@ aguardar_arquivo(caminho_arquivo_csv)
 #finaliza o navegador
 driver.quit()
 
-subprocess.run(['python', 'extrato.py'])
+PROJECT_BASE_PATH = Path(__file__).parent
+subprocess.run(['python', PROJECT_BASE_PATH / 'extrato.py'])

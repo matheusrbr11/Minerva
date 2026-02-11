@@ -418,7 +418,6 @@ class MinervaApp(ctk.CTk, Siafe):
                 self.stop_event = True
                 self.progress.stop()
                 self.progress.set(1)
-                self.siafe.fechar_driver()
                 self.show_login_frame()
                 return
 
@@ -435,7 +434,8 @@ class MinervaApp(ctk.CTk, Siafe):
         
         finally:
             self.log("Fechando navegador...")
-            self.siafe.fechar_driver()
+            if not df.empty:
+                self.siafe.fechar_driver()
             self.progress.stop()
             self.progress.configure(mode="determinate")
             self.progress.set(1)

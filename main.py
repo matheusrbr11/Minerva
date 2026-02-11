@@ -30,7 +30,7 @@ class MinervaApp(ctk.CTk, Siafe):
         self.IconPath = PROJECT_BASE_PATH / "img/icon.ico"
         self.ImagePath = PROJECT_BASE_PATH / "img/tesouro.png"
         self.VoltarPath = PROJECT_BASE_PATH / "img/voltar.png"
-        self.ManualPath = PROJECT_BASE_PATH / "Minerva Manual de Uso.pdf"
+        self.ManualPath = PROJECT_BASE_PATH / "Manual de Uso.pdf"
         self.DAFPath = PROJECT_BASE_PATH / "DAF.py"
         
         # --- Configuração da Janela ---

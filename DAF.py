@@ -84,12 +84,11 @@ def baixar_daf(data_inicial, data_final):
 caminho_arquivo_csv = fr'C:\Users\{os.getlogin()}\Downloads\demonstrativoDAF.csv'
 
 #configurações iniciais do Edge
-service = Service()
 edge_options = Options()
 edge_options.add_argument("--start-maximized")
 edge_options.add_argument("--headless")
 edge_options.add_argument("--log-level=3")
-driver = webdriver.Edge(service=service, options=edge_options)
+driver = webdriver.Edge(options=edge_options)
 driver.maximize_window()
 
 #define as datas a serem usadas

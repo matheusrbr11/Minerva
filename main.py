@@ -11,7 +11,7 @@ import time
 import sys
 import os
 
-from SiafeLibrary import *
+from jupiter import Siafe
 
 # Configuração Global
 ctk.set_appearance_mode("Light")
@@ -19,7 +19,7 @@ ctk.set_default_color_theme("dark-blue")
 
 PROJECT_BASE_PATH = Path(__file__).parent
 
-class MinervaApp(ctk.CTk):
+class MinervaApp(ctk.CTk, Siafe):
     def __init__(self):
         super().__init__()
         
@@ -400,7 +400,7 @@ class MinervaApp(ctk.CTk):
             self.progress.set(0)
 
             # 3. Automação
-            self.siafe.iniciar_driver()
+            self.siafe.abrir_driver()
             self.log("Iniciando navegador...")
             
             if self.stop_event: return

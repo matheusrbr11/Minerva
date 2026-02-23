@@ -87,7 +87,7 @@ class MinervaApp(ctk.CTk, Siafe):
     def cancelar_e_voltar(self):
         self.stop_event = True
         try: 
-            if hasattr(self, 'siafe'): self.siafe.fechar_driver()
+            if self.driver: self.siafe.fechar_driver()
         except: pass
         self.show_config_frame()
         
@@ -485,7 +485,7 @@ class MinervaApp(ctk.CTk, Siafe):
     def encerrar_app(self):
         self.stop_event = True
         try:
-            if hasattr(self, 'siafe'): self.siafe.fechar_driver()
+            if self.driver: self.siafe.fechar_driver()
         except: pass
         self.usuario_siafe = ""
         self.senha_siafe = ""

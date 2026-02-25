@@ -23,7 +23,7 @@ class MinervaApp(ctk.CTk, Siafe):
     def __init__(self):
         super().__init__()
         
-        self.siafeVersao = 2  # Versão do SIAFE a ser utilizada (1 para SIAFE-Rio2 ou 2 para SIAFE-Rio2 BETA)
+        self.siafeVersao = 1  # Versão do SIAFE a ser utilizada (1 para SIAFE-Rio2 ou 2 para SIAFE-Rio2 BETA)
         
         # --- Paths ---
         self.DBPath = PROJECT_BASE_PATH / "base de dados" / "DAF.db"

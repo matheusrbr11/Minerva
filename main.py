@@ -418,6 +418,7 @@ class MinervaApp(ctk.CTk, Siafe):
                 self.stop_event = True
                 self.progress.stop()
                 self.progress.set(1)
+                self.siafe.fechar_driver()
                 self.show_login_frame()
                 return
 

@@ -11,7 +11,7 @@ import time
 import sys
 import os
 
-from jupiter import Siafe
+from siafelibrary import Siafe
 
 # Configuração Global
 ctk.set_appearance_mode("Light")
@@ -271,6 +271,24 @@ class MinervaApp(ctk.CTk, Siafe):
         self.show_execucao_frame()
         self.stop_event = False
         threading.Thread(target=self.execucao, daemon=True).start()
+        
+    def _finalizar_interface_ui(self, texto_label, titulo_msg=None, texto_msg=None, tipo_msg="info"):
+        """
+         Helper rodado na thread principal para atualizar a UI ao final do processamento.
+        """
+        try:
+            if not hasattr(self, 'progress') or not self.progress.winfo_exists(): return
+            self.label.set(texto_label)
+            self.progress.stop()
+            self.progress.configure(mode="determinate")
+            self.progress.set(1)
+        
+            if titulo_msg and texto_msg:
+                if tipo_msg == "erro":
+                    self.messagebox_error(titulo_msg, texto_msg)
+                else:
+                    self.messagebox_info(titulo_msg, texto_msg)
+        except: pass
 
     # =========================================================================
     # TELA 3: EXECUÇÃO (Log Visual)
@@ -299,10 +317,18 @@ class MinervaApp(ctk.CTk, Siafe):
 
     def log(self, msg):        
         if not self.winfo_exists() or not hasattr(self, 'log_box'): return
-        try:
-            self.log_box.insert("end", f"[{time.strftime('%H:%M:%S')}] {msg}\n")
-            self.log_box.see("end")
-        except: pass
+        
+        msg_formatada = f"[{time.strftime('%H:%M:%S')}] {msg}\n"
+        
+        def inserir_texto():
+            if hasattr(self, 'log_box') and self.log_box.winfo_exists():
+                try:
+                    self.log_box.insert("end", msg_formatada)
+                    self.log_box.see("end")
+                except: 
+                    pass
+                    
+        self.after(0, inserir_texto)
         
     def messagebox_info(self, title, message):
         """
@@ -351,9 +377,14 @@ class MinervaApp(ctk.CTk, Siafe):
                 
             self.registros_processados += 1
             percentual_inteiro = int((self.registros_processados / self.total_registros) * 100)  
-            valor_barra = self.registros_processados / self.total_registros    
-            self.label.set(f"Processando... ({percentual_inteiro}%)")
-            self.progress.set(valor_barra)
+            valor_barra = self.registros_processados / self.total_registros 
+               
+            def atualizar_progresso():
+                if hasattr(self, 'progress') and self.progress.winfo_exists():
+                    self.label.set(f"Processando... ({percentual_inteiro}%)")
+                    self.progress.set(valor_barra)
+                    
+            self.after(0, atualizar_progresso)
             
         except Exception as e:
             self.log(f"Erro ao atualizar banco ID {id}: {e}")
@@ -387,17 +418,18 @@ class MinervaApp(ctk.CTk, Siafe):
 
             if df.empty:
                 self.log(f"Nenhum lançamento pendente encontrado para {tipo_doc}.")
-                self.label.set(f"Processado... (100%)")
-                self.progress.stop()
-                self.progress.set(1)
-                self.messagebox_info("Aviso", "Não há lançamentos pendentes para processar.")
+                self.after(0, self._finalizar_interface_ui, "Processado... (100%)", "Aviso", "Não há lançamentos pendentes para processar.")
                 self.stop_event = True
                 return
 
             self.log(f"{len(df)} registros encontrados.")
             self.total_registros = len(df)
             self.registros_processados = 0
-            self.progress.set(0)
+            
+            def resetar_progresso():
+                if hasattr(self, 'progress') and self.progress.winfo_exists():
+                    self.progress.set(0)
+            self.after(0, resetar_progresso)
 
             # 3. Automação
             self.siafe.abrir_driver()
@@ -411,37 +443,32 @@ class MinervaApp(ctk.CTk, Siafe):
 
                 if sucesso:
                     self.log(">>> Processo concluído com Sucesso! <<<")
-                    self.label.set(f"Processado... (100%)")
-                    self.messagebox_info("Sucesso", f"{tipo_doc} contabilizadas com sucesso!")
+                    self.after(0, self._finalizar_interface_ui, "Processado... (100%)", "Sucesso", f"{tipo_doc} contabilizadas com sucesso!")
+
             else:
                 self.log("Falha no login. Verifique suas credenciais.")
                 self.stop_event = True
-                self.progress.stop()
-                self.progress.set(1)
                 self.siafe.fechar_driver()
-                self.show_login_frame()
+                self.after(0, lambda: [self._finalizar_interface_ui("Falha no Login"), self.show_login_frame()])
                 return
 
         except (NoSuchElementException, SessionNotCreatedException, InvalidSessionIdException) as e:
-            self.log(f"Ocorreu um erro crítico com o navegador.\nPor favor, reinicie o programa.")
             if self.stop_event: return
+            self.log(f"Ocorreu um erro crítico com o navegador.\nPor favor, reinicie o programa.")
             raise e
 
         except Exception as e:
-            if not self.stop_event:
-                self.log(f"Ocorreu um erro inesperado.")
-                self.messagebox_error("Erro", f"Ocorreu um erro inesperado: {e}")
-                if self.stop_event: return
+            if self.stop_event: return
+            self.log(f"Ocorreu um erro inesperado.")
+            self.after(0, self.messagebox_error, "Erro", f"Ocorreu um erro inesperado: {e}")
         
         finally:
+            if self.stop_event: return
             self.log("Fechando navegador...")
             if not df.empty:
                 self.siafe.fechar_driver()
-            self.progress.stop()
-            self.progress.configure(mode="determinate")
-            self.progress.set(1)
+            self.after(0, self._finalizar_interface_ui, self.label.get())
             self.log("Programa Encerrado...")
-        if self.stop_event: return
 
     # =========================================================================
     # DADOS ESTRUTURAIS

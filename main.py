@@ -11,7 +11,7 @@ import time
 import sys
 import os
 
-from siafelibrary import Siafe
+from jupiter import Siafe
 
 # Configuração Global
 ctk.set_appearance_mode("Light")
@@ -23,7 +23,7 @@ class MinervaApp(ctk.CTk, Siafe):
     def __init__(self):
         super().__init__()
         
-        self.siafeVersao = 1  # Versão do SIAFE a ser utilizada (1 para SIAFE-Rio2 ou 2 para SIAFE-Rio2 BETA)
+        self.siafeVersao = 1 # Versão do SIAFE a ser utilizada (1 para SIAFE-Rio2 ou 2 para SIAFE-Rio2 BETA)
         
         # --- Paths ---
         self.DBPath = PROJECT_BASE_PATH / "base de dados" / "DAF.db"
@@ -87,7 +87,8 @@ class MinervaApp(ctk.CTk, Siafe):
     def cancelar_e_voltar(self):
         self.stop_event = True
         try: 
-            if self.driver: self.siafe.fechar_driver()
+            if self.siafe.driver:
+                self.siafe.fechar_driver()
         except: pass
         self.show_config_frame()
         
@@ -368,6 +369,7 @@ class MinervaApp(ctk.CTk, Siafe):
     # =========================================================================
     def atualizar_banco(self, id, num_documento, tempo_contab=None):
         """Callback para atualizar o banco de dados"""
+
         try:
             with sqlite3.connect(self.DBPath) as con:
                 cursor = con.cursor()
@@ -403,14 +405,16 @@ class MinervaApp(ctk.CTk, Siafe):
                     # IDs 1 a 10 são Receitas
                     df = pd.read_sql_query("SELECT * FROM contabilizacoes WHERE num_documento IS NULL AND tipo_id IN (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)", con)
                     dict_map = self.dict_map_gr
-                    metodo_siafe = self.siafe.gerar_gr
+                    metodo_siafe = self.siafe.gerar_documento
+                    documento = self.siafe.gerar_GR
                     tipo_doc = "Guia de Recolhimento"
                     
                 elif "PASEP (PD)" in self.opcao_selecionada:
                     # IDs 11 a 20 são PDs
                     df = pd.read_sql_query("SELECT * FROM contabilizacoes WHERE num_documento IS NULL AND tipo_id IN (11, 12, 13, 14, 15, 16, 17, 18, 19, 20)", con)
                     dict_map = self.dict_map_pd
-                    metodo_siafe = self.siafe.gerar_pdt # PD de Transferência
+                    metodo_siafe = self.siafe.gerar_documento
+                    documento = self.siafe.gerar_PDT # PD de Transferência
                     tipo_doc = "PD de Transferência"
                 else:
                     self.log("Opção inválida.")
@@ -439,7 +443,8 @@ class MinervaApp(ctk.CTk, Siafe):
 
             self.log("Iniciando Contabilização...")
             if self.siafe.logar_siafe(self.siafeVersao, self.usuario_siafe, self.senha_siafe):
-                sucesso = metodo_siafe(df, dict_map, callback_sucesso=self.atualizar_banco)
+
+                sucesso = metodo_siafe(documento, df, dict_map, callback_sucesso=self.atualizar_banco)
 
                 if sucesso:
                     self.log(">>> Processo concluído com Sucesso! <<<")
@@ -460,12 +465,13 @@ class MinervaApp(ctk.CTk, Siafe):
         except Exception as e:
             if self.stop_event: return
             self.log(f"Ocorreu um erro inesperado.")
+            print(e)
             self.after(0, self.messagebox_error, "Erro", f"Ocorreu um erro inesperado: {e}")
         
         finally:
             if self.stop_event: return
             self.log("Fechando navegador...")
-            if not df.empty:
+            if self.siafe.driver:
                 self.siafe.fechar_driver()
             self.after(0, self._finalizar_interface_ui, self.label.get())
             self.log("Programa Encerrado...")
@@ -475,16 +481,16 @@ class MinervaApp(ctk.CTk, Siafe):
     # =========================================================================
     def _inicializar_dicionarios(self):
         # Definições para GR
-        self.dictGR_ANP7990 = {"TipoDocumento": "Orçamentário", "UG": "999900", "DomicilioBancario": "2916347", "DomicilioBancarioCompleto": "001 - 2234 - 2916347", "IEF": "1 - Recursos do Exercício Corrente", "Fonte": "704 - Transferência da União Referente a Royalties do Petróleo e Gás Natural", "FonteRJ": "104 - Transferência da União Ref. a Comp. Financ. pela Exploração de Recursos Naturais", "TipoDetalhamentoFonte": "0 - Sem Detalhamento", "DetalhamentoFonte": "000000 - Sem detalhamento - (704.104)", "Convenio": "000000 - Convênio não identificado", "TipoPatrimonial": "Transferências Intergovernamentais Recebidas", "ItemPatrimonial": "4879 - COTA-PARTE DA COMP. FINANC. DOS ROYALTIES PELA PRODUÇÃO DO PETRÓLEO - ATÉ 5% - PÓS-SAL", "OperacaoPatrimonial": "2469 - Reconhecimento, Arrecadação e Recolhimento", "NaturezaReceita": "1399990103 - Out Rec Pat - Royalties pela Produção do Petróleo - Até 5%"}
-        self.dictGR_ANP9478 = {"TipoDocumento": "Orçamentário", "UG": "999900", "DomicilioBancario": "2916347", "DomicilioBancarioCompleto": "001 - 2234 - 2916347", "IEF": "1 - Recursos do Exercício Corrente", "Fonte": "704 - Transferência da União Referente a Royalties do Petróleo e Gás Natural", "FonteRJ": "104 - Transferência da União Ref. a Comp. Financ. pela Exploração de Recursos Naturais", "TipoDetalhamentoFonte": "0 - Sem Detalhamento", "DetalhamentoFonte": "000000 - Sem detalhamento - (704.104)", "Convenio": "000000 - Convênio não identificado", "TipoPatrimonial": "Transferências Intergovernamentais Recebidas", "ItemPatrimonial": "4881 - ROYALTIES PELA PRODUÇÃO DO PETRÓLEO - EXCEDENTE A 5%", "OperacaoPatrimonial": "2469 - Reconhecimento, Arrecadação e Recolhimento", "NaturezaReceita": "1399990105 - Out Rec Pat - Royalties pela Produção do Petróleo - Excedente a 5%"}
-        self.dictGR_PEA = {"TipoDocumento": "Orçamentário", "UG": "999900", "DomicilioBancario": "2916347", "DomicilioBancarioCompleto": "001 - 2234 - 2916347", "IEF": "1 - Recursos do Exercício Corrente", "Fonte": "704 - Transferência da União Referente a Royalties do Petróleo e Gás Natural", "FonteRJ": "104 - Transferência da União Ref. a Comp. Financ. pela Exploração de Recursos Naturais", "TipoDetalhamentoFonte": "0 - Sem Detalhamento", "DetalhamentoFonte": "000000 - Sem detalhamento - (704.104)", "Convenio": "000000 - Convênio não identificado", "TipoPatrimonial": "Transferências Intergovernamentais Recebidas", "ItemPatrimonial": "5686 - COTA PARTE PART. ESPECIAL EXP. PETR. E GAS NATURAL LEI 9.478/97", "OperacaoPatrimonial": "2469 - Reconhecimento, Arrecadação e Recolhimento", "NaturezaReceita": "1399990106 - Out Rec Pat - Participação Especial Exploração do Petróleo"}
-        self.dictGR_FEP = {"TipoDocumento": "Orçamentário", "UG": "999900", "DomicilioBancario": "2916347", "DomicilioBancarioCompleto": "001 - 2234 - 2916347", "IEF": "1 - Recursos do Exercício Corrente", "Fonte": "704 - Transferência da União Referente a Royalties do Petróleo e Gás Natural", "FonteRJ": "104 - Transferência da União Ref. a Comp. Financ. pela Exploração de Recursos Naturais", "TipoDetalhamentoFonte": "0 - Sem Detalhamento", "DetalhamentoFonte": "000000 - Sem detalhamento - (704.104)", "Convenio": "000000 - Convênio não identificado", "TipoPatrimonial": "Transferências Intergovernamentais Recebidas", "ItemPatrimonial": "5723 - COTA PARTE FUNDO ESPECIAL DO PETROLEO", "OperacaoPatrimonial": "2469 - Reconhecimento, Arrecadação e Recolhimento", "NaturezaReceita": "1399990107 - Out Rec Pat - Fundo Especial do Petróleo - FEP"}
-        self.dictGR_FPE = {"TipoDocumento": "Orçamentário", "UG": "999900", "DomicilioBancario": "2916339", "DomicilioBancarioCompleto": "001 - 2234 - 2916339", "IEF": "1 - Recursos do Exercício Corrente", "Fonte": "500 - Recursos não Vinculados de Impostos", "FonteRJ": "107 - Recursos não Vinculados de Impostos - Transferência Constitucionais de Impostos", "TipoDetalhamentoFonte": "0 - Sem Detalhamento", "DetalhamentoFonte": "000000 - Sem detalhamento - (500.107)", "Convenio": "000000 - Convênio não identificado", "TipoPatrimonial": "Transferências Intergovernamentais Recebidas", "ItemPatrimonial": "2038 - COTA-PARTE DO FUNDO DE PARTICIPAÇÃO DOS ESTADOS - FPE", "OperacaoPatrimonial": "2469 - Reconhecimento, Arrecadação e Recolhimento", "NaturezaReceita": "1711500101 - Cota-Parte FPE - Fundo de Participação dos Estados e do DF - Principal"}
-        self.dictGR_IPI = {"TipoDocumento": "Orçamentário", "UG": "999900", "DomicilioBancario": "2916363", "DomicilioBancarioCompleto": "001 - 2234 - 2916363", "IEF": "1 - Recursos do Exercício Corrente", "Fonte": "500 - Recursos não Vinculados de Impostos", "FonteRJ": "107 - Recursos não Vinculados de Impostos - Transferência Constitucionais de Impostos", "TipoDetalhamentoFonte": "0 - Sem Detalhamento", "DetalhamentoFonte": "000000 - Sem detalhamento - (500.107)", "Convenio": "000000 - Convênio não identificado", "TipoPatrimonial": "Transferências Intergovernamentais Recebidas", "ItemPatrimonial": "2040 - COTA-PARTE DO ESTADO - IPI", "OperacaoPatrimonial": "2469 - Reconhecimento, Arrecadação e Recolhimento", "NaturezaReceita": "1711530101 - Cota-Parte IPI Exportação - Principal - LC 61/89"}
-        self.dictGR_CFM = {"TipoDocumento": "Orçamentário", "UG": "999900", "DomicilioBancario": "2916371", "DomicilioBancarioCompleto": "001 - 2234 - 2916371", "IEF": "1 - Recursos do Exercício Corrente", "Fonte": "708 - Transferência da União Referente à Compensação Financeira de Recursos Minerais", "FonteRJ": "101 - Transferência da União - Compensação Financeira de Recursos Minerais", "TipoDetalhamentoFonte": "0 - Sem Detalhamento", "DetalhamentoFonte": "000000 - Sem detalhamento - (708.101)", "Convenio": "000000 - Convênio não identificado", "TipoPatrimonial": "Transferências Intergovernamentais Recebidas", "ItemPatrimonial": "5682 - Cota-Parte da Compensação Financeira de Recursos Minerais", "OperacaoPatrimonial": "2469 - Reconhecimento, Arrecadação e Recolhimento", "NaturezaReceita": "1344020101 - Compensação Financeira pela Exploração de Recursos Minerais - Principal"}
-        self.dictGR_CFH = {"TipoDocumento": "Orçamentário", "UG": "999900", "DomicilioBancario": "291638X", "DomicilioBancarioCompleto": "001 - 2234 - 291638X", "IEF": "1 - Recursos do Exercício Corrente", "Fonte": "709 - Transferência da União referente à Compensação Financeira de Recursos Hídricos", "FonteRJ": "101 - Transferência da União - Compensação Financeira de Recursos Hídricos", "TipoDetalhamentoFonte": "0 - Sem Detalhamento", "DetalhamentoFonte": "000000 - Sem detalhamento - (709.101)", "Convenio": "000000 - Convênio não identificado", "TipoPatrimonial": "Transferências Intergovernamentais Recebidas", "ItemPatrimonial": "5722 - COTA PARTE DA COMPENSAÇÃO FINANCEIRA RECURSOS HIDRICOS", "OperacaoPatrimonial": "2469 - Reconhecimento, Arrecadação e Recolhimento", "NaturezaReceita": "1345032101 - Utilização de Recursos Hídricos - Demais Empresas - Principal"}
-        self.dictGR_CIDE = {"TipoDocumento": "Orçamentário", "UG": "999900", "DomicilioBancario": "2916509", "DomicilioBancarioCompleto": "001 - 2234 - 2916509", "IEF": "1 - Recursos do Exercício Corrente", "Fonte": "750 - Recursos da Contribuição de Intervenção no Domínio Econômico - CIDE", "FonteRJ": "126 - Recursos da Contribuição de Intervenção no Domínio Econômico - CIDE", "TipoDetalhamentoFonte": "0 - Sem Detalhamento", "DetalhamentoFonte": "000000 - Sem detalhamento - (750.126)", "Convenio": "000000 - Convênio não identificado", "TipoPatrimonial": "Transferências Intergovernamentais Recebidas", "ItemPatrimonial": "2044 - COTA-PARTE DO ESTADO NA CONTRIBUIÇÃO DE INTERVENÇÃO NO DOMÍNIO ECONÔMICO - CIDE", "OperacaoPatrimonial": "2469 - Reconhecimento, Arrecadação e Recolhimento", "NaturezaReceita": "1711540101 - Cota-Parte Contribuição de Intervenção no Domínio Econômico - CIDE - Principal"}
-        self.dictGR_ADO = {"TipoDocumento": "Orçamentário", "UG": "999900", "DomicilioBancario": "2916312", "DomicilioBancarioCompleto": "001 - 2234 - 2916312", "IEF": "1 - Recursos do Exercício Corrente", "Fonte": "501 - Outros Recursos não Vinculados", "FonteRJ": "101 - Outros Recursos não Vinculados - Ordinários Não Provenientes de Impostos-Tesouro", "TipoDetalhamentoFonte": "0 - Sem Detalhamento", "DetalhamentoFonte": "000000 - Sem detalhamento - (501.101)", "Convenio": "000000 - Convênio não identificado", "TipoPatrimonial": "Transferências Intergovernamentais Recebidas", "ItemPatrimonial": "2055 - DEMAIS TRANSFERÊNCIAS DA UNIÃO", "OperacaoPatrimonial": "2469 - Reconhecimento, Arrecadação e Recolhimento", "NaturezaReceita": "1719990101 - Outras Transferências da União - Principal"}
+        self.dictGR_ANP7990 = {"ExtraOrcamentario": False, "TipoDocumento": "Orçamentário", "UG": "999900", "DomicilioBancario": "2916347", "DomicilioBancarioCompleto": "001 - 2234 - 2916347", "IEF": "1 - Recursos do Exercício Corrente", "Fonte": "704 - Transferência da União Referente a Royalties do Petróleo e Gás Natural", "FonteRJ": "104 - Transferência da União Ref. a Comp. Financ. pela Exploração de Recursos Naturais", "TipoDetalhamentoFonte": "0 - Sem Detalhamento", "DetalhamentoFonte": "000000 - Sem detalhamento - (704.104)", "Convenio": "000000 - Convênio não identificado", "TipoPatrimonial": "Transferências Intergovernamentais Recebidas", "ItemPatrimonial": "4879 - COTA-PARTE DA COMP. FINANC. DOS ROYALTIES PELA PRODUÇÃO DO PETRÓLEO - ATÉ 5% - PÓS-SAL", "OperacaoPatrimonial": "2469 - Reconhecimento, Arrecadação e Recolhimento", "NaturezaReceita": "1399990103 - Out Rec Pat - Royalties pela Produção do Petróleo - Até 5%"}
+        self.dictGR_ANP9478 = {"ExtraOrcamentario": False, "TipoDocumento": "Orçamentário", "UG": "999900", "DomicilioBancario": "2916347", "DomicilioBancarioCompleto": "001 - 2234 - 2916347", "IEF": "1 - Recursos do Exercício Corrente", "Fonte": "704 - Transferência da União Referente a Royalties do Petróleo e Gás Natural", "FonteRJ": "104 - Transferência da União Ref. a Comp. Financ. pela Exploração de Recursos Naturais", "TipoDetalhamentoFonte": "0 - Sem Detalhamento", "DetalhamentoFonte": "000000 - Sem detalhamento - (704.104)", "Convenio": "000000 - Convênio não identificado", "TipoPatrimonial": "Transferências Intergovernamentais Recebidas", "ItemPatrimonial": "4881 - ROYALTIES PELA PRODUÇÃO DO PETRÓLEO - EXCEDENTE A 5%", "OperacaoPatrimonial": "2469 - Reconhecimento, Arrecadação e Recolhimento", "NaturezaReceita": "1399990105 - Out Rec Pat - Royalties pela Produção do Petróleo - Excedente a 5%"}
+        self.dictGR_PEA = {"ExtraOrcamentario": False, "TipoDocumento": "Orçamentário", "UG": "999900", "DomicilioBancario": "2916347", "DomicilioBancarioCompleto": "001 - 2234 - 2916347", "IEF": "1 - Recursos do Exercício Corrente", "Fonte": "704 - Transferência da União Referente a Royalties do Petróleo e Gás Natural", "FonteRJ": "104 - Transferência da União Ref. a Comp. Financ. pela Exploração de Recursos Naturais", "TipoDetalhamentoFonte": "0 - Sem Detalhamento", "DetalhamentoFonte": "000000 - Sem detalhamento - (704.104)", "Convenio": "000000 - Convênio não identificado", "TipoPatrimonial": "Transferências Intergovernamentais Recebidas", "ItemPatrimonial": "5686 - COTA PARTE PART. ESPECIAL EXP. PETR. E GAS NATURAL LEI 9.478/97", "OperacaoPatrimonial": "2469 - Reconhecimento, Arrecadação e Recolhimento", "NaturezaReceita": "1399990106 - Out Rec Pat - Participação Especial Exploração do Petróleo"}
+        self.dictGR_FEP = {"ExtraOrcamentario": False, "TipoDocumento": "Orçamentário", "UG": "999900", "DomicilioBancario": "2916347", "DomicilioBancarioCompleto": "001 - 2234 - 2916347", "IEF": "1 - Recursos do Exercício Corrente", "Fonte": "704 - Transferência da União Referente a Royalties do Petróleo e Gás Natural", "FonteRJ": "104 - Transferência da União Ref. a Comp. Financ. pela Exploração de Recursos Naturais", "TipoDetalhamentoFonte": "0 - Sem Detalhamento", "DetalhamentoFonte": "000000 - Sem detalhamento - (704.104)", "Convenio": "000000 - Convênio não identificado", "TipoPatrimonial": "Transferências Intergovernamentais Recebidas", "ItemPatrimonial": "5723 - COTA PARTE FUNDO ESPECIAL DO PETROLEO", "OperacaoPatrimonial": "2469 - Reconhecimento, Arrecadação e Recolhimento", "NaturezaReceita": "1399990107 - Out Rec Pat - Fundo Especial do Petróleo - FEP"}
+        self.dictGR_FPE = {"ExtraOrcamentario": False, "TipoDocumento": "Orçamentário", "UG": "999900", "DomicilioBancario": "2916339", "DomicilioBancarioCompleto": "001 - 2234 - 2916339", "IEF": "1 - Recursos do Exercício Corrente", "Fonte": "500 - Recursos não Vinculados de Impostos", "FonteRJ": "107 - Recursos não Vinculados de Impostos - Transferência Constitucionais de Impostos", "TipoDetalhamentoFonte": "0 - Sem Detalhamento", "DetalhamentoFonte": "000000 - Sem detalhamento - (500.107)", "Convenio": "000000 - Convênio não identificado", "TipoPatrimonial": "Transferências Intergovernamentais Recebidas", "ItemPatrimonial": "2038 - COTA-PARTE DO FUNDO DE PARTICIPAÇÃO DOS ESTADOS - FPE", "OperacaoPatrimonial": "2469 - Reconhecimento, Arrecadação e Recolhimento", "NaturezaReceita": "1711500101 - Cota-Parte FPE - Fundo de Participação dos Estados e do DF - Principal"}
+        self.dictGR_IPI = {"ExtraOrcamentario": False, "TipoDocumento": "Orçamentário", "UG": "999900", "DomicilioBancario": "2916363", "DomicilioBancarioCompleto": "001 - 2234 - 2916363", "IEF": "1 - Recursos do Exercício Corrente", "Fonte": "500 - Recursos não Vinculados de Impostos", "FonteRJ": "107 - Recursos não Vinculados de Impostos - Transferência Constitucionais de Impostos", "TipoDetalhamentoFonte": "0 - Sem Detalhamento", "DetalhamentoFonte": "000000 - Sem detalhamento - (500.107)", "Convenio": "000000 - Convênio não identificado", "TipoPatrimonial": "Transferências Intergovernamentais Recebidas", "ItemPatrimonial": "2040 - COTA-PARTE DO ESTADO - IPI", "OperacaoPatrimonial": "2469 - Reconhecimento, Arrecadação e Recolhimento", "NaturezaReceita": "1711530101 - Cota-Parte IPI Exportação - Principal - LC 61/89"}
+        self.dictGR_CFM = {"ExtraOrcamentario": False, "TipoDocumento": "Orçamentário", "UG": "999900", "DomicilioBancario": "2916371", "DomicilioBancarioCompleto": "001 - 2234 - 2916371", "IEF": "1 - Recursos do Exercício Corrente", "Fonte": "708 - Transferência da União Referente à Compensação Financeira de Recursos Minerais", "FonteRJ": "101 - Transferência da União - Compensação Financeira de Recursos Minerais", "TipoDetalhamentoFonte": "0 - Sem Detalhamento", "DetalhamentoFonte": "000000 - Sem detalhamento - (708.101)", "Convenio": "000000 - Convênio não identificado", "TipoPatrimonial": "Transferências Intergovernamentais Recebidas", "ItemPatrimonial": "5682 - Cota-Parte da Compensação Financeira de Recursos Minerais", "OperacaoPatrimonial": "2469 - Reconhecimento, Arrecadação e Recolhimento", "NaturezaReceita": "1344020101 - Compensação Financeira pela Exploração de Recursos Minerais - Principal"}
+        self.dictGR_CFH = {"ExtraOrcamentario": False, "TipoDocumento": "Orçamentário", "UG": "999900", "DomicilioBancario": "291638X", "DomicilioBancarioCompleto": "001 - 2234 - 291638X", "IEF": "1 - Recursos do Exercício Corrente", "Fonte": "709 - Transferência da União referente à Compensação Financeira de Recursos Hídricos", "FonteRJ": "101 - Transferência da União - Compensação Financeira de Recursos Hídricos", "TipoDetalhamentoFonte": "0 - Sem Detalhamento", "DetalhamentoFonte": "000000 - Sem detalhamento - (709.101)", "Convenio": "000000 - Convênio não identificado", "TipoPatrimonial": "Transferências Intergovernamentais Recebidas", "ItemPatrimonial": "5722 - COTA PARTE DA COMPENSAÇÃO FINANCEIRA RECURSOS HIDRICOS", "OperacaoPatrimonial": "2469 - Reconhecimento, Arrecadação e Recolhimento", "NaturezaReceita": "1345032101 - Utilização de Recursos Hídricos - Demais Empresas - Principal"}
+        self.dictGR_CIDE = {"ExtraOrcamentario": False, "TipoDocumento": "Orçamentário", "UG": "999900", "DomicilioBancario": "2916509", "DomicilioBancarioCompleto": "001 - 2234 - 2916509", "IEF": "1 - Recursos do Exercício Corrente", "Fonte": "750 - Recursos da Contribuição de Intervenção no Domínio Econômico - CIDE", "FonteRJ": "126 - Recursos da Contribuição de Intervenção no Domínio Econômico - CIDE", "TipoDetalhamentoFonte": "0 - Sem Detalhamento", "DetalhamentoFonte": "000000 - Sem detalhamento - (750.126)", "Convenio": "000000 - Convênio não identificado", "TipoPatrimonial": "Transferências Intergovernamentais Recebidas", "ItemPatrimonial": "2044 - COTA-PARTE DO ESTADO NA CONTRIBUIÇÃO DE INTERVENÇÃO NO DOMÍNIO ECONÔMICO - CIDE", "OperacaoPatrimonial": "2469 - Reconhecimento, Arrecadação e Recolhimento", "NaturezaReceita": "1711540101 - Cota-Parte Contribuição de Intervenção no Domínio Econômico - CIDE - Principal"}
+        self.dictGR_ADO = {"ExtraOrcamentario": False, "TipoDocumento": "Orçamentário", "UG": "999900", "DomicilioBancario": "2916312", "DomicilioBancarioCompleto": "001 - 2234 - 2916312", "IEF": "1 - Recursos do Exercício Corrente", "Fonte": "501 - Outros Recursos não Vinculados", "FonteRJ": "101 - Outros Recursos não Vinculados - Ordinários Não Provenientes de Impostos-Tesouro", "TipoDetalhamentoFonte": "0 - Sem Detalhamento", "DetalhamentoFonte": "000000 - Sem detalhamento - (501.101)", "Convenio": "000000 - Convênio não identificado", "TipoPatrimonial": "Transferências Intergovernamentais Recebidas", "ItemPatrimonial": "2055 - DEMAIS TRANSFERÊNCIAS DA UNIÃO", "OperacaoPatrimonial": "2469 - Reconhecimento, Arrecadação e Recolhimento", "NaturezaReceita": "1719990101 - Outras Transferências da União - Principal"}
 
         # Definições para PD
         self.dictPD_PASEP_ROYALTIES = {"UG": "999900", "UGFavorecida": "370200", "Regularizacao": "OB Regularização Financeira", "JustificativaRegularizacao": "RETENÇÃO-PASEP", "DomicilioBancarioOrigem": "2916347", "DomicilioBancarioOrigemCompleto": "001 - 2234 - 2916347", "DomicilioBancarioDestino": "BCO AUTENT", "DomicilioBancarioDestinoCompleto": "001 - 2234 - BCO AUTENT", "IEF": "1 - Recursos do Exercício Corrente", "Fonte": "704 - Transferência da União Referente a Royalties do Petróleo e Gás Natural", "FonteRJ": "104 - Transferência da União Ref. a Comp. Financ. pela Exploração de Recursos Naturais", "TipoDetalhamentoFonte": "0 - Sem Detalhamento", "DetalhamentoFonte": "000000 - Sem detalhamento - (704.104)", "Convenio": "000000 - Convênio não identificado", "Indice": "1,000", "TipoPatrimonial": "Pagamentos a Regularizar", "ItemPatrimonial": "5678 - Pagamentos (Por Ofício) a Regularizar - FONTES TESOURO", "OperacaoPatrimonial": "4962 - Pagamentos (Por Ofícios) a Regularizar - FONTES TESOURO"}
@@ -513,7 +519,8 @@ class MinervaApp(ctk.CTk, Siafe):
     def encerrar_app(self):
         self.stop_event = True
         try:
-            if self.driver: self.siafe.fechar_driver()
+            if self.siafe.driver:
+                self.siafe.fechar_driver()
         except: pass
         self.usuario_siafe = ""
         self.senha_siafe = ""

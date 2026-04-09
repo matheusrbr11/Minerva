@@ -30,16 +30,16 @@ O **Programa Minerva** é uma ferramenta de automação desenvolvida para a **Co
 
 O sistema elimina a necessidade de lançamentos manuais no **SIAFE-Rio2**, reduzindo erros operacionais e o tempo gasto em tarefas repetitivas, processando automaticamente as seguintes transferências federais:
 
-- | ANP  - Royalties pela Produção do Petróleo – Até 5% (Lei 7.990/89) |
-- | ANP  - Royalties pela Produção do Petróleo – Excedente a 5% (Lei 9.478/97) |
-- | PEA  - Participação Especial do Petróleo |
-- | FEP  - Fundo Especial do Petróleo |
-- | FPE  - Fundo de Participação dos Estados |
-- | IPI  - Imposto sobre Produtos Industrializados Exportação |
-- | CFM  - Compensação Financeira pela Exploração Mineral |
-- | CFH  - Compensação Financeira pela Utilização de Recursos Hídricos |
-- | CIDE - Contribuição de Intervenção no Domínio Econômico |
-- | ADO  - LC 176/2020 |
+- ANP  - Royalties pela Produção do Petróleo – Até 5% (Lei 7.990/89)
+- ANP  - Royalties pela Produção do Petróleo – Excedente a 5% (Lei 9.478/97)
+- PEA  - Participação Especial do Petróleo
+- FEP  - Fundo Especial do Petróleo
+- FPE  - Fundo de Participação dos Estados
+- IPI  - Imposto sobre Produtos Industrializados Exportação
+- CFM  - Compensação Financeira pela Exploração Mineral
+- CFH  - Compensação Financeira pela Utilização de Recursos Hídricos
+- CIDE - Contribuição de Intervenção no Domínio Econômico
+- ADO  - LC 176/2020
 
 ---
 

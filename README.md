@@ -147,10 +147,6 @@ env\Scripts\activate
 
 ### 3. Instale as dependências
 
-```bash
-pip install -r requirements.txt
-```
-
 > **Dependências principais:**
 
 | Pacote | Uso |
@@ -195,8 +191,7 @@ minerva/
 │
 ├── Manual de Uso.pdf       # Manual do usuário
 ├── .gitignore
-├── README.md
-└── requirements.txt
+└── README.md
 ```
 
 ---

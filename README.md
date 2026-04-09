@@ -248,7 +248,7 @@ Armazena os dados brutos extraídos do CSV do DAF.
 
 | Coluna | Tipo | Descrição |
 |---|---|---|
-| `fundo` | TEXT | Nome do fundo/fonte |
+| `fundo` | TEXT | Nome do fundo |
 | `data` | TEXT | Data do repasse |
 | `parcela` | TEXT | Tipo de parcela (ex: ANP-LEI 7990/89) |
 | `valor` | REAL | Valor da parcela |
@@ -262,7 +262,7 @@ Este projeto é desenvolvido e mantido pela **Equipe de Otimização Processual 
 
 Dúvidas, sugestões e reportes de inconsistências operacionais devem ser encaminhados diretamente à equipe. Em caso de mudanças nas premissas operacionais (estrutura do DAF, roteiros contábeis, contas, etc.), a equipe deve ser notificada para atualização do sistema e do manual de uso.
 
-O manual de uso está arquivado no **SEI-RJ** sob o processo `SEI-040009/002236/2025`, denominado *"Manual de Uso Nº 02/2026"*.
+O manual de uso está arquivado no **SEI-RJ** sob o processo `SEI-040009/000183/2026`, denominado *"Manual de Uso Nº 02/2026"*.
 
 ---
 

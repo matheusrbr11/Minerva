@@ -478,8 +478,8 @@ class MinervaApp(ctk.CTk, Siafe):
             self.log("Fechando navegador...")
             if self.siafe.driver:
                 self.siafe.fechar_driver()
-            self.after(0, self._finalizar_interface_ui, self.label.get())
-            self.log("Programa Encerrado...")
+            self.after(1500, lambda: [self._finalizar_interface_ui(self.label.get()), self.show_config_frame()])
+            self.log("Programa encerrado. Retornando ao menu principal...")
 
     # =========================================================================
     # DADOS ESTRUTURAIS

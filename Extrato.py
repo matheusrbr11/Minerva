@@ -105,8 +105,8 @@ def processar_arquivos_csv(pasta_raiz: str):
                 pasep_estado = (valor_decimal, row['fundo'])
                 continue
 
-            if parcela == 'ANP-LEI 7990/89': anp_7990.append(valor_decimal)
-            elif parcela == 'ANP-LEI 9478/97': anp_9478.append(valor_decimal)
+            if 'ANP-LEI 7990/89' in parcela: anp_7990.append(valor_decimal)
+            elif 'ANP-LEI 9478/97' in parcela: anp_9478.append(valor_decimal)
             elif parcela == 'PART.ESP.ANP': pea.append(valor_decimal)
             elif parcela == 'COTA-PARTE': fep.append(valor_decimal)
 

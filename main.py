@@ -14,7 +14,6 @@ class MinervaApp(BaseApp):
         cfg = AppConfig(
             app_name="Programa Minerva",
             app_version="1.1.0",
-            about_text="Programa Minerva\n Versão 1.1.0 \nDesenvolvido por: EOP / SUPCONC",
             window_width=500,
             window_height=650,
             login_subtitle="⚠️ Faça Login com os dados do Siafe-Rio2. ⚠️",

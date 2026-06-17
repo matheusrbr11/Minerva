@@ -119,13 +119,13 @@ class MinervaApp(BaseApp):
     # =========================================================================
     # BACKEND: BANCO DE DADOS E EXECUÇÃO
     # =========================================================================
-    def atualizar_banco(self, id_registro, num_documento, tempo_contab=None):
+    def atualizar_banco(self, id, num_documento, tempo_contab=None):
         """Callback acionado por Siafe a cada documento finalizado"""
         try:
             with sqlite3.connect(self.DBPath) as con:
                 cursor = con.cursor()
                 query = '''UPDATE contabilizacoes SET num_documento = ?, tempo_contab = ?, usuario = ?, data_hora = ? WHERE id = ?'''
-                cursor.execute(query, (num_documento, tempo_contab, os.getlogin(), str(pd.Timestamp.now()), id_registro))
+                cursor.execute(query, (num_documento, tempo_contab, os.getlogin(), str(pd.Timestamp.now()), id))
                 con.commit()
                 
             self.registros_processados += 1
@@ -134,7 +134,7 @@ class MinervaApp(BaseApp):
             self.update_progress(valor_barra)
             
         except Exception as e:
-            self.log(f"Erro ao atualizar banco ID {id_registro}: {e}")
+            self.log(f"Erro ao atualizar banco ID {id}: {e}")
 
     def execucao(self):
         """Lógica de processamento em background"""

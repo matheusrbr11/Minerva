@@ -326,18 +326,15 @@ def carregar_no_banco_de_dados(vfinal_total: pd.DataFrame) -> int:
             con.close()
             return 0
         
-        login_usuario = os.getlogin()
-        data_hora_agora = str(pd.Timestamp.now())
+        user = os.getlogin()
+        data_hora = str(pd.Timestamp.now())
         insercoes_feitas = 0
 
         for index, row in novos_lancamentos.iterrows():
-            cursor.execute(
-                '''
-                INSERT INTO contabilizacoes (data, valor, observacao, num_documento, tipo_id, usuario, data_hora, tempo_contab)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                ''', 
-                [row['data'], row['valor'], row['observacao'], None, int(row['tipo_id']), login_usuario, data_hora_agora, None]
-            )
+            cursor.execute('''
+                INSERT INTO contabilizacoes (data, valor, observacao, num_documento, tipo_id, usuario_inclusao, data_hora_inclusao)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', [row['data'], row['valor'], row['observacao'], None, int(row['tipo_id']), user, data_hora])
             con.commit()
             insercoes_feitas += 1
                 

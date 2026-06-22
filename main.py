@@ -124,8 +124,8 @@ class MinervaApp(BaseApp):
         try:
             with sqlite3.connect(self.DBPath) as con:
                 cursor = con.cursor()
-                query = '''UPDATE contabilizacoes SET num_documento = ?, tempo_contab = ?, usuario = ?, data_hora = ? WHERE id = ?'''
-                cursor.execute(query, (num_documento, tempo_contab, os.getlogin(), str(pd.Timestamp.now()), id))
+                query = '''UPDATE contabilizacoes SET num_documento = ?, usuario_contab = ?, data_hora_contab = ?, tempo_contab = ? WHERE id = ?'''
+                cursor.execute(query, (num_documento, os.getlogin(), str(pd.Timestamp.now()), tempo_contab, id))
                 con.commit()
                 
             self.registros_processados += 1

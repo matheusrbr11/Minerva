@@ -36,8 +36,6 @@ class MinervaApp(BaseApp):
         self.siafe = Siafe()
         self.stop_event = False
         self.opcao_selecionada = None 
-
-        self._inicializar_dicionarios()
         
         self.show_login_frame(on_success=lambda u, s: self.show_config_frame())
 

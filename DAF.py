@@ -39,8 +39,8 @@ def baixar_daf(nav: Navegador, data_inicial: str, data_final: str):
         data_final_input.clear()
         data_final_input.send_keys(data_final)
 
-    # clicar fora
-    nav.clicar('//*[@id="angular-component-container"]/apw-ng-app/app-template/bb-layout/div[1]/div/div/div/div/bb-layout-column/ng-component/div/div/div/app-demonstrativo-daf-selecao/div/div[2]/div/div/form/bb-card/bb-card-footer/bb-button-group')
+    # clicar fora (necessário somente com headless = False)
+    #nav.clicar('//*[@id="angular-component-container"]/apw-ng-app/app-template/bb-layout/div[1]/div/div/div/div/bb-layout-column/ng-component/div/div/div/app-demonstrativo-daf-selecao/div/div[2]/div/div/form/bb-card/bb-card-footer/bb-button-group')
 
     # clicar no botão continuar
     nav.clicar('//*[@id="angular-component-container"]/apw-ng-app/app-template/bb-layout/div[1]/div/div/div/div/bb-layout-column/ng-component/div/div/div/app-demonstrativo-daf-selecao/div/div[2]/div/div/form/bb-card/bb-card-footer/bb-button-group/div/button[2]')

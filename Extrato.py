@@ -84,7 +84,7 @@ def processar_arquivos_csv(pasta_raiz: str):
     """
     
     def _processar_dia(data_dia: str, df_dia: pd.DataFrame) -> list:
-        anp_7990, anp_9478, pea, fep = [], [], [], []
+        anp_7990, anp_9478, anp_7990E, anp_9478E, pea, fep = [], [], [], [], [], []
         fpe, ipi, cfm, cid, ado, cfh = [], [], [], [], [], []
         pasep_fpe, pasep_ipi, pasep_cfm, pasep_cid, pasep_ado, pasep_cfh = [], [], [], [], [], []
         
@@ -105,8 +105,10 @@ def processar_arquivos_csv(pasta_raiz: str):
                 pasep_estado = (valor_decimal, row['fundo'])
                 continue
 
-            if 'ANP-LEI 7990/89' in parcela: anp_7990.append(valor_decimal)
-            elif 'ANP-LEI 9478/97' in parcela: anp_9478.append(valor_decimal)
+            if parcela == 'ANP-LEI 7990/89': anp_7990.append(valor_decimal)
+            elif parcela == 'ANP-LEI 9478/97': anp_9478.append(valor_decimal)
+            elif parcela == 'ANP-LEI 7990/89-12858/13': anp_7990E.append(valor_decimal)
+            elif parcela == 'ANP-LEI 9478/97-12858/13': anp_9478E.append(valor_decimal)
             elif parcela == 'PART.ESP.ANP': pea.append(valor_decimal)
             elif parcela == 'COTA-PARTE': fep.append(valor_decimal)
 
@@ -171,6 +173,8 @@ def processar_arquivos_csv(pasta_raiz: str):
 
         _add_royalty(anp_7990, 1, Decimal('0.0075'), 11)
         _add_royalty(anp_9478, 2, Decimal('0.01'), 12)
+        _add_royalty(anp_7990E, 1, Decimal('0.0075'), 11)
+        _add_royalty(anp_9478E, 2, Decimal('0.01'), 12)
         _add_royalty(pea, 3, Decimal('0.01'), 13)
         _add_royalty(fep, 4, Decimal('0.01'), 14)
         

@@ -1,5 +1,6 @@
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from datetime import datetime
 from pathlib import Path
@@ -38,12 +39,13 @@ def baixar_daf(nav: Navegador, data_inicial: str, data_final: str):
         data_final_input.click()
         data_final_input.clear()
         data_final_input.send_keys(data_final)
+        data_final_input.send_keys(Keys.ESCAPE)
 
     # clicar fora (necessário somente com headless = False)
     #nav.clicar('//*[@id="angular-component-container"]/apw-ng-app/app-template/bb-layout/div[1]/div/div/div/div/bb-layout-column/ng-component/div/div/div/app-demonstrativo-daf-selecao/div/div[2]/div/div/form/bb-card/bb-card-footer/bb-button-group')
 
-    # clicar no botão continuar
-    nav.clicar('//*[@id="angular-component-container"]/apw-ng-app/app-template/bb-layout/div[1]/div/div/div/div/bb-layout-column/ng-component/div/div/div/app-demonstrativo-daf-selecao/div/div[2]/div/div/form/bb-card/bb-card-footer/bb-button-group/div/button[2]')
+    botao_continuar = WebDriverWait(nav.driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="angular-component-container"]/apw-ng-app/app-template/bb-layout/div[1]/div/div/div/div/bb-layout-column/ng-component/div/div/div/app-demonstrativo-daf-selecao/div/div[2]/div/div/form/bb-card/bb-card-footer/bb-button-group/div/button[2]')))
+    nav.driver.execute_script("arguments[0].click();", botao_continuar)
 
     # clicar no botão download
     nav.clicar('//*[@id="angular-component-container"]/apw-ng-app/app-template/bb-layout/div[1]/div/div/div/div/bb-layout-column/ng-component/div/div/div/app-demonstrativo-daf-final/div/div[2]/div/div/bb-card/bb-card-header/bb-card-header-action/bb-icon-button/bb-icon')

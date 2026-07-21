@@ -27,6 +27,7 @@ OBS_MAP_CSV = {
     8: 'REGISTRO DA RECEITA PROVENIENTE DA COMPENSAÇÃO FINANCEIRA PELA UTILIZAÇÃO DE RECURSOS HÍDRICOS - CFH, REFERENTE A ',
     9: 'REGISTRO DA RECEITA PROVENIENTE DA CONTRIBUIÇÃO DE INTERVENÇÃO NO DOMÍNIO ECONÔMICO - CIDE, REFERENTE A ',
     10: 'REGISTRO DA RECEITA PROVENIENTE DA LC 176/2020 (ADO25), REFERENTE A ',
+    21: 'REGISTRO DA RECEITA PROVENIENTE DO IMPOSTO SOBRE O OURO - ISO, REFERENTE A ',
     
     # --- PASEP (tipo_id 11-20) ---
     11: 'REGISTRO DA TRANSFERÊNCIA DA RETENÇÃO DO PASEP - ROYALTIES PELA PRODUÇÃO DO PETRÓLEO - ATÉ 5% - LEI 7990/89, A ENCARGOS GERAIS, REFERENTE A ',
@@ -39,6 +40,7 @@ OBS_MAP_CSV = {
     18: 'REGISTRO DA TRANSFERÊNCIA DA RETENÇÃO DO PASEP - COMPENSAÇÃO FINANCEIRA PELA UTILIZAÇÃO DE RECURSOS HÍDRICOS - CFH, A ENCARGOS GERAIS, REFERENTE A ',
     19: 'REGISTRO DA TRANSFERÊNCIA DA RETENÇÃO DO PASEP - CONTRIBUIÇÃO DE INTERVENÇÃO NO DOMÍNIO ECONÔMICO - CIDE, A ENCARGOS GERAIS, REFERENTE A ',
     20: 'REGISTRO DA TRANSFERÊNCIA DA RETENÇÃO DO PASEP - LC 176/2020 (ADO25), A ENCARGOS GERAIS, REFERENTE A ',
+    22: 'REGISTRO DA TRANSFERÊNCIA DA RETENÇÃO DO PASEP - IMPOSTO SOBRE O OURO - ISO, A ENCARGOS GERAIS, REFERENTE A '
 }
 
 ALL_TIPO_IDS = tuple(OBS_MAP_CSV.keys())
@@ -84,9 +86,9 @@ def processar_arquivos_csv(pasta_raiz: str):
     """
     
     def _processar_dia(data_dia: str, df_dia: pd.DataFrame) -> list:
-        anp_7990, anp_9478, anp_7990E, anp_9478E, pea, fep = [], [], [], [], [], []
+        anp_7990, anp_9478, anp_7990E, anp_9478E, pea, fep, iso = [], [], [], [], [], [], []
         fpe, ipi, cfm, cid, ado, cfh = [], [], [], [], [], []
-        pasep_fpe, pasep_ipi, pasep_cfm, pasep_cid, pasep_ado, pasep_cfh = [], [], [], [], [], []
+        pasep_fpe, pasep_ipi, pasep_cfm, pasep_cid, pasep_ado, pasep_cfh, pasep_iso = [], [], [], [], [], [], []
         
         grupo = None
         retencao_pasep = None
@@ -118,6 +120,10 @@ def processar_arquivos_csv(pasta_raiz: str):
             elif parcela == 'IPI - ESTADO' or parcela == 'IPI-MUNICIPIOS':
                 ipi.append(valor_decimal)
                 grupo = 'IPI'
+            
+            elif parcela == 'IMP.S/OURO(IOF)': 
+                iso.append(valor_decimal)
+                grupo = "ISO"
 
             elif parcela == 'CFM-PRD.MINERAL':
                 cfm.append(valor_decimal)
@@ -142,10 +148,12 @@ def processar_arquivos_csv(pasta_raiz: str):
                 if retencao_pasep is not None:
                     pasep_ado.append(retencao_pasep[0])
                     retencao_pasep = None
-
+                    
             elif parcela == 'RETENCAO PASEP':
                 if grupo == 'FPE':
                     pasep_fpe.append(valor_decimal)
+                elif grupo == 'ISO':
+                    pasep_iso.append(valor_decimal)
                 grupo = None
                 
             elif parcela == 'PASEP ESTADO':
@@ -184,6 +192,7 @@ def processar_arquivos_csv(pasta_raiz: str):
         _add_outro(cfh, 8, pasep_cfh, 18)
         _add_outro(cid, 9, pasep_cid, 19)
         _add_outro(ado, 10, pasep_ado, 20)
+        _add_outro(iso, 21, pasep_iso, 22)
 
         return lancamentos
 

@@ -22,7 +22,7 @@ NOMES_COLUNAS = {
 
 COLUNA_ELASTICA = "tipo_descricao"
 
-def construir_tela_db(app, programa_nome="", tipo_ids=None):
+def construir_tela_db(app, programa_nome="", tipo_ids=None, pagina_inicial="contabilizados"):
     tipo_ids = tipo_ids or []
 
     def _ler(query):
@@ -383,8 +383,15 @@ def construir_tela_db(app, programa_nome="", tipo_ids=None):
         lbl_contador.configure(text=f"{len(df)} registro(s)")
         lbl_total.configure(text=f"Total: {len(df)} registro(s)")
 
-    seletor.set(opt_contab)
-    df_inicial = preparar(carregar_contabilizados())
+    # ── INICIALIZAÇÃO BASEADA NO PARÂMETRO ──
+    if pagina_inicial.lower() == "pendentes":
+        aba_padrao = opt_pend
+        df_inicial = preparar(carregar_pendentes())
+    else:
+        aba_padrao = opt_contab
+        df_inicial = preparar(carregar_contabilizados())
+
+    seletor.set(aba_padrao)
     tabela.carregar_dados(df_inicial)
     lbl_contador.configure(text=f"{len(df_inicial)} registro(s)")
     lbl_total.configure(text=f"Total: {len(df_inicial)} registro(s)")

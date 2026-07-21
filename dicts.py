@@ -172,6 +172,23 @@ dictGR_ADO = {
     "OperacaoPatrimonial": "2469 - Reconhecimento, Arrecadação e Recolhimento", 
     "NaturezaReceita": "1719990101 - Outras Transferências da União - Principal"
 }
+dictGR_ISO = {
+    "ExtraOrcamentario": False, 
+    "TipoDocumento": "Orçamentário", 
+    "UG": "999900", 
+    "DomicilioBancario": "2916355", 
+    "DomicilioBancarioCompleto": "001 - 2234 - 2916355", 
+    "IEF": "1 - Recursos do Exercício Corrente", 
+    "Fonte": "500 - Recursos não Vinculados de Impostos", 
+    "FonteRJ": "107 - Recursos não Vinculados de Impostos - Transferência Constitucionais de Impostos", 
+    "TipoDetalhamentoFonte": "0 - Sem Detalhamento", 
+    "DetalhamentoFonte": "000000 - Sem detalhamento - (500.107)", 
+    "Convenio": "000000 - Convênio não identificado", 
+    "TipoPatrimonial": "Transferências Intergovernamentais Recebidas", 
+    "ItemPatrimonial": "2043 - COTA-PARTE IMP. S/ O.CRÉD. CÂMB. SEG.TIT.VAL.MOB.COM.OURO COTA-PARTE DO ESTADO - IPI", 
+    "OperacaoPatrimonial": "2469 - Reconhecimento, Arrecadação e Recolhimento", 
+    "NaturezaReceita": "1711550101 - Cota-Parte Imposto s/ Op Cred Camb Seg Tit Val Mob - IOF/Ouro - Principal"
+}
 
 dictPD_PASEP_ROYALTIES = {
     "UG": "999900", 
@@ -313,17 +330,37 @@ dictPD_PASEP_ADO = {
     "ItemPatrimonial": "5678 - Pagamentos (Por Ofício) a Regularizar - FONTES TESOURO", 
     "OperacaoPatrimonial": "4962 - Pagamentos (Por Ofícios) a Regularizar - FONTES TESOURO"
 }
+dictPD_PASEP_ISO = {
+    "UG": "999900", 
+    "UGFavorecida": "370200", 
+    "Regularizacao": "OB Regularização Financeira", 
+    "JustificativaRegularizacao": "RETENÇÃO-PASEP",
+    "DomicilioBancarioOrigem": "2916355", 
+    "DomicilioBancarioOrigemCompleto": "001 - 2234 - 2916355", 
+    "DomicilioBancarioDestino": "BCO AUTENT",
+    "DomicilioBancarioDestinoCompleto": "001 - 2234 - BCO AUTENT", 
+    "IEF": "1 - Recursos do Exercício Corrente",
+    "Fonte": "500 - Recursos não Vinculados de Impostos", 
+    "FonteRJ": "107 - Recursos não Vinculados de Impostos - Transferência Constitucionais de Impostos", 
+    "TipoDetalhamentoFonte": "0 - Sem Detalhamento", 
+    "DetalhamentoFonte": "000000 - Sem detalhamento - (500.107)",
+    "Convenio": "000000 - Convênio não identificado", 
+    "Indice": "1,000", 
+    "TipoPatrimonial": "Pagamentos a Regularizar", 
+    "ItemPatrimonial": "5678 - Pagamentos (Por Ofício) a Regularizar - FONTES TESOURO", 
+    "OperacaoPatrimonial": "4962 - Pagamentos (Por Ofícios) a Regularizar - FONTES TESOURO"
+}
 
 dict_map_gr = {
     1: dictGR_ANP7990, 2: dictGR_ANP9478, 3: dictGR_PEA,
     4: dictGR_FEP, 5: dictGR_FPE, 6: dictGR_IPI,
     7: dictGR_CFM, 8: dictGR_CFH, 9: dictGR_CIDE,
-    10: dictGR_ADO
+    10: dictGR_ADO, 21: dictGR_ISO
 }
 dict_map_pd = {
     11: dictPD_PASEP_ROYALTIES, 12: dictPD_PASEP_ROYALTIES,
     13: dictPD_PASEP_ROYALTIES, 14: dictPD_PASEP_ROYALTIES,
     15: dictPD_PASEP_FPE, 16: dictPD_PASEP_IPI,
     17: dictPD_PASEP_CFM, 18: dictPD_PASEP_CFH,
-    19: dictPD_PASEP_CIDE, 20: dictPD_PASEP_ADO
+    19: dictPD_PASEP_CIDE, 20: dictPD_PASEP_ADO, 22: dictPD_PASEP_ISO
 } 

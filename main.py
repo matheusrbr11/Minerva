@@ -4,21 +4,46 @@ from pathlib import Path
 import pandas as pd
 import subprocess
 import threading
+import traceback
 import logging
 import sqlite3
+import json
 import os
 
 from eop_ui import AppConfig, BaseApp
-from jupiter import configurar_log, Siafe
+from jupiter import configurar_log, Siafe, GraphAPI
+from tela_db import construir_tela_db
 import dicts
 
 logger = logging.getLogger("jupiter.Minerva")
+tipo_ids = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+
+class ColetorErros(logging.Handler):
+    """Acumula os registros de ERRO da sessão (do app e da biblioteca) para o resumo enviado ao fechar."""
+
+    def __init__(self, destino: list, level=logging.ERROR):
+        super().__init__(level=level)
+        self._destino = destino  # lista onde os erros vão sendo guardados
+
+    def emit(self, record):
+        # chamado pelo logging a cada erro; guarda os dados num dict pra montar o resumo depois
+        try:
+            # se tiver exceção, formata o traceback completo em texto
+            tb = "".join(traceback.format_exception(*record.exc_info)) if record.exc_info else ""
+            self._destino.append({
+                "timestamp": pd.Timestamp.fromtimestamp(record.created).strftime("%d/%m/%Y %H:%M:%S"),
+                "origem": record.name,
+                "mensagem": record.getMessage(),
+                "traceback": tb,
+            })
+        except Exception:
+            self.handleError(record)
 
 class MinervaApp(BaseApp):
     def __init__(self):
         cfg = AppConfig(
             app_name="Programa Minerva",
-            app_version="1.2.0",
+            app_version="1.3.0",
             window_width=500,
             window_height=650,
             login_subtitle="⚠️ Faça Login com os dados do Siafe-Rio2. ⚠️",
@@ -29,15 +54,57 @@ class MinervaApp(BaseApp):
         )
         super().__init__(cfg)
         
-        self.siafeVersao = 1
+        self.siafeVersao = 2             # 1 = Prod | 2 = Beta
+        
         self.DBPath = self.cfg.base_path / "base de dados" / "DAF.db"
         self.DAFPath = self.cfg.base_path / "DAF.py"
         
-        self.siafe = Siafe()
-        self.stop_event = False
-        self.opcao_selecionada = None 
+        self.siafe = Siafe()             # controla o navegador/sessão do siafe
+        self.stop_event = False          # vira True quando o usuário cancela a rotina
+        self.opcao_selecionada = None    # tipo de contabilização escolhido no combo
+        
+        self.graph = None                # GraphAPI; definido em __main__ após configurar_log
+        self.dev_emails = []             # destinatários do e-mail de erro
+        self.teams_webhook = None        # webhook do Teams (opcional)
+        self.erros_acumulados = []       # falhas críticas da sessão; resumo enviado ao fechar
         
         self.show_login_frame(on_success=lambda u, s: self.show_config_frame())
+        
+    def _enviar_resumo_erros(self):
+        """Envia, uma única vez ao fechar, um resumo dos erros da sessão por e-mail e/ou Teams."""
+        # sem graph configurado ou sem erros, não há o que enviar
+        if not self.graph or not self.erros_acumulados:
+            return
+
+        total = len(self.erros_acumulados)
+        # monta o corpo da mensagem linha a linha
+        linhas = [
+            "Resumo de erros — Programa Minerva",
+            f"Usuário: {os.getlogin()}",
+            f"Total de erros na sessão: {total}",
+        ]
+        for i, err in enumerate(self.erros_acumulados, 1):
+            linhas.append("")
+            linhas.append(f"[{i}] {err['timestamp']} — {err['origem']}")
+            linhas.append(err["mensagem"])
+            if err["traceback"]:
+                linhas.append(err["traceback"].strip())
+        mensagem = "\n".join(linhas)
+        titulo = f"[Minerva] {total} erro(s) na execução"
+
+        try:
+            # manda por e-mail e/ou teams, conforme o que estiver configurado
+            if self.dev_emails:
+                self.graph.enviar_email(titulo=titulo, mensagem=mensagem, destinatarios=self.dev_emails)
+            if self.teams_webhook:
+                self.graph.enviar_mensagem(self.teams_webhook, f"{titulo}\n\n{mensagem}", self.dev_emails)
+        except Exception:
+            # se falhar o envio, não deixa isso derrubar o fechamento do app
+            logger.error("Falha ao enviar o resumo de erros aos desenvolvedores", exc_info=True)
+
+    def report_callback_exception(self, exc, val, tb):
+        """Erros não tratados na interface (Tkinter) — logados e capturados para o resumo."""
+        logger.error("Erro não tratado na interface", exc_info=(exc, val, tb))
 
     # =========================================================================
     # EVENTOS DE NAVEGAÇÃO
@@ -81,6 +148,11 @@ class MinervaApp(BaseApp):
             command=self.iniciar_daf_thread
         )
         self.btn_daf.pack(pady=(5, 15))
+        
+        self.make_primary_button(
+            frame_daf, text="BANCO DE DADOS",
+            command=lambda: self.mostrar_pendentes_popup("Programa Minerva", tipo_ids)
+        ).pack(pady=5)
 
         # --- ÁREA 2: CONTABILIZAÇÃO (Siafe) ---
         frame_contab = self.make_section_frame()
@@ -149,14 +221,14 @@ class MinervaApp(BaseApp):
 
             with sqlite3.connect(self.DBPath) as con:
                 if "Receita (GR)" in self.opcao_selecionada:
-                    df = pd.read_sql_query("SELECT * FROM contabilizacoes WHERE num_documento IS NULL AND tipo_id IN (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)", con)
+                    df = pd.read_sql_query("SELECT * FROM contabilizacoes WHERE num_documento IS NULL AND tipo_id IN (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 21)", con)
                     dict_map     = dicts.dict_map_gr
                     metodo_siafe = self.siafe.gerar_documento
                     documento    = self.siafe.gerar_GR
                     tipo_doc     = "Guia de Recolhimento"
                     
                 elif "PASEP (PD)" in self.opcao_selecionada:
-                    df = pd.read_sql_query("SELECT * FROM contabilizacoes WHERE num_documento IS NULL AND tipo_id IN (11, 12, 13, 14, 15, 16, 17, 18, 19, 20)", con)
+                    df = pd.read_sql_query("SELECT * FROM contabilizacoes WHERE num_documento IS NULL AND tipo_id IN (11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22)", con)
                     dict_map     = dicts.dict_map_pd
                     metodo_siafe = self.siafe.gerar_documento
                     documento    = self.siafe.gerar_PDT
@@ -213,7 +285,7 @@ class MinervaApp(BaseApp):
             self.messagebox_error("Erro", "Ocorreu um erro inesperado.")
 
         finally:
-            self.after(0, self.mostrar_pendentes_popup)
+            self.after(0, self.mostrar_pendentes_popup("Programa Minerva", tipo_ids, pagina_inicial="pendentes"))
             if not self.stop_event:
                 logger.info("Fechando navegador.")
             if hasattr(self, 'siafe') and self.siafe.driver:
@@ -225,180 +297,11 @@ class MinervaApp(BaseApp):
     # =========================================================================
     # POPUP: CONTABILIZAÇÕES PENDENTES
     # =========================================================================
-    def mostrar_pendentes_popup(self):
-        """Exibe um popup com os lançamentos não contabilizados."""
-        try:
-            with sqlite3.connect(self.DBPath) as con:
-                df_pend = pd.read_sql_query(
-                    "SELECT data, observacao, valor FROM contabilizacoes WHERE num_documento IS NULL", con
-                )
-        except Exception:
-            logger.error("Erro ao buscar lançamentos pendentes.", exc_info=True)
-            return
+    def mostrar_pendentes_popup(self, programa_nome, tipo_ids, pagina_inicial):
 
-        if df_pend.empty:
-            return 
-
-        def formatar_moeda(val):
-            if pd.isna(val) or val is None or val == "":
-                return "---"
-            try:
-                if isinstance(val, str):
-                    val = val.replace(".", "").replace(",", ".")
-                v = float(val)
-                s = f"{v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-                return f"R$ {s}"
-            except Exception:
-                return str(val)
-
-        if "valor" in [c.lower() for c in df_pend.columns]:
-            df_pend["valor"] = df_pend["valor"].apply(formatar_moeda)
-
-        limite_caracteres = 140  
-        if "observacao" in [c.lower() for c in df_pend.columns]:
-            df_pend["observacao"] = df_pend["observacao"].apply(
-                lambda x: str(x)[:limite_caracteres] + "..." if pd.notna(x) and len(str(x)) > limite_caracteres else str(x)
-            )
-
-        df_pend = df_pend.fillna("---")
-        colunas = list(df_pend.columns)
-
-        hoje = pd.Timestamp.now()
-        mes_atual = hoje.month
-        ano_atual = hoje.year
-
-        mes_anterior = 12 if mes_atual == 1 else mes_atual - 1
-        ano_mes_anterior = ano_atual - 1 if mes_atual == 1 else ano_atual
-
-        # Dicionário de bloqueio contábil
-        ano_prazo = ano_atual
-        prazos_fechamento = {
-            1: f"12/02/{ano_prazo}", 2: f"06/03/{ano_prazo}", 3: f"09/04/{ano_prazo}",
-            4: f"08/05/{ano_prazo}", 5: f"09/06/{ano_prazo}", 6: f"07/07/{ano_prazo}",
-            7: f"07/08/{ano_prazo}", 8: f"08/09/{ano_prazo}", 9: f"07/10/{ano_prazo}",
-            10: f"09/11/{ano_prazo}", 11: f"07/12/{ano_prazo}", 12: f"08/01/{ano_prazo}"
-        }
-        
-        data_bloq_contab = prazos_fechamento.get(mes_anterior, "Data Indefinida")
-        tem_pendencia_mes_anterior = False
-
-        if "data" in [c.lower() for c in df_pend.columns]:
-            datas_dt = pd.to_datetime(df_pend['data'], dayfirst=True, errors='coerce')
-            
-            tem_pendencia_mes_anterior = (
-                (datas_dt.dt.month == mes_anterior) & 
-                (datas_dt.dt.year == ano_mes_anterior)
-            ).any()
-
-        col_widths = []
-        for col in colunas:
-            max_len = df_pend[col].astype(str).map(len).max()
-            header_len = len(col)
-            width = max(max_len, header_len) * 7 + 15 # pixels + margem
-            col_widths.append(width)
-
-        total_width = sum(col_widths) + 50 # scrollbar
-        pw = int(min(max(total_width, 1100), 1600)) # largura da janela entre 1100 e 1600
-        ph = 540
-        
-        if tem_pendencia_mes_anterior:
-            ph += 55
-
-        ws = self.winfo_screenwidth()
-        hs = self.winfo_screenheight()
-        x = int((ws / 2) - (pw / 2))
-        y = int((hs / 2) - (ph / 2))
-        
-        idx_obs = colunas.index("observacao") if "observacao" in colunas else -1
-
-        # --- Estilos e Fontes ---
-        fonte_titulo = ctk.CTkFont(family="Roboto", size=18, weight="bold")
-        fonte_subtitulo = ctk.CTkFont(family="Roboto", size=12)
-        fonte_header = ctk.CTkFont(family="Roboto", size=11, weight="bold")
-        fonte_celula = ctk.CTkFont(family="Roboto", size=11)
-        fonte_botao = ctk.CTkFont(family="Roboto", size=13, weight="bold")
-
-        tema = {
-            "bg_janela": "#f5f7fa", "header_bg": "#2B3A4A", "header_text": "#FFFFFF",
-            "aviso_bg": "#fff3cd", "aviso_text": "#856404", "tabela_borda": "#e8edf2",
-            "tabela_header": "#34495E", "linha_par": "#f0f6ff", "linha_impar": "#ffffff",
-            "texto_tabela": "#2b2b2b", "btn_fechar": "#d9534f", "btn_hover": "#b52b27",
-            "alerta_bg": "#f8d7da", "alerta_text": "#721c24"
-        }
-
-        popup = ctk.CTkToplevel(self)
-        popup.attributes("-alpha", 0.0) 
-        popup.title("Contabilizações Pendentes")
-        popup.geometry('%dx%d+%d+%d' % (pw, ph, x, y))
-        popup.resizable(False, False)
-        popup.configure(fg_color=tema["bg_janela"])
-        # --- Header ---
-        header = ctk.CTkFrame(popup, fg_color=tema["header_bg"], corner_radius=0, height=65)
-        header.pack(fill="x")
-        header.pack_propagate(False)
-
-        ctk.CTkLabel(header, text="Contabilizações Pendentes", font=fonte_titulo, text_color=tema["header_text"]).pack(side="left", padx=20, pady=15)
-        ctk.CTkLabel(header, text=f"{len(df_pend)} pendência(s)", font=fonte_subtitulo, text_color="#A9C2D9").pack(side="right", padx=15)
-        # --- Aviso de mês anterior ---
-        if tem_pendencia_mes_anterior:
-            alerta = ctk.CTkFrame(popup, fg_color=tema["alerta_bg"], corner_radius=0, height=50)
-            alerta.pack(fill="x")
-            alerta.pack_propagate(False)
-            texto_critico = f"🚨 Há lançamentos do mês anterior não contabilizados! Contabilize até {data_bloq_contab}."
-            ctk.CTkLabel(alerta, text=texto_critico, font=ctk.CTkFont(family="Roboto", size=12, weight="bold"), text_color=tema["alerta_text"], wraplength=pw - 40, justify="left").pack(anchor="w", padx=20, pady=13)
-        # --- Aviso Padrão ---
-        aviso = ctk.CTkFrame(popup, fg_color=tema["aviso_bg"], corner_radius=0, height=50)
-        aviso.pack(fill="x")
-        aviso.pack_propagate(False)
-        ctk.CTkLabel(aviso, text="⚠️ Os lançamentos listados abaixo ainda não foram contabilizados.", font=fonte_subtitulo, text_color=tema["aviso_text"], wraplength=pw - 40, justify="left").pack(anchor="w", padx=20, pady=13)
-        # --- Tabela ---
-        table_outer = ctk.CTkFrame(popup, fg_color=tema["tabela_borda"], corner_radius=8)
-        table_outer.pack(fill="both", expand=True, padx=12, pady=(10, 6))
-
-        header_row = ctk.CTkFrame(table_outer, fg_color=tema["tabela_header"], corner_radius=6, height=36)
-        header_row.pack(fill="x", padx=2, pady=(2, 0))
-        header_row.pack_propagate(False)
-        
-        if idx_obs != -1: header_row.grid_columnconfigure(idx_obs, weight=1)
-        
-        for j, col in enumerate(colunas):
-            ctk.CTkLabel(
-                header_row, text=col.replace("_", " ").upper(),
-                font=fonte_header, text_color="white", anchor="center", width=col_widths[j]
-            ).grid(row=0, column=j, sticky="nsew", padx=1, pady=6)
-
-        scroll_area = ctk.CTkScrollableFrame(table_outer, fg_color="transparent", corner_radius=0)
-        scroll_area.pack(fill="both", expand=True, padx=2, pady=(0, 2))
-        
-        if idx_obs != -1: scroll_area.grid_columnconfigure(idx_obs, weight=1)
-
-        for i, (_, row) in enumerate(df_pend.iterrows()):
-            bg = tema["linha_par"] if i % 2 == 0 else tema["linha_impar"]
-            for j, val in enumerate(row):
-                cell_text = str(val) if val is not None else "---"
-                w = col_widths[j] if j != idx_obs else 0
-
-                entry = ctk.CTkEntry(
-                    scroll_area, font=fonte_celula, fg_color=bg, text_color=tema["texto_tabela"],
-                    corner_radius=0, border_width=0, height=30, width=w, justify="center"
-                )
-                entry.grid(row=i, column=j, sticky="nsew", padx=1, pady=1)
-                entry.insert(0, cell_text)
-                entry.configure(state="readonly")
-        # --- Footer ---
-        footer = ctk.CTkFrame(popup, fg_color=tema["bg_janela"], corner_radius=0, height=52)
-        footer.pack(fill="x")
-        footer.pack_propagate(False)
-
-        ctk.CTkLabel(footer, text=f"Total de pendências: {len(df_pend)} registro(s)", font=fonte_subtitulo, text_color="#666666").pack(side="left", padx=20, pady=12)
-        ctk.CTkButton(footer, text="Fechar", width=120, height=34, fg_color=tema["btn_fechar"], hover_color=tema["btn_hover"], font=fonte_botao, command=popup.destroy).pack(side="right", padx=20, pady=9)
-
-        popup.update()
-        popup.attributes("-alpha", 1.0) 
-        popup.grab_set()
-        popup.attributes("-topmost", True)
-        if self.cfg.icon_path.exists():
-            popup.after(100, lambda: popup.iconbitmap(str(self.cfg.icon_path)))  
+        # constrói e exibe o popup de consulta ao banco (código em tela_db.py)
+        # programa_nome/tipo_ids definem a visão inicial (contabilizados do programa atual)
+        construir_tela_db(self, programa_nome, tipo_ids, pagina_inicial=pagina_inicial) 
 
 if __name__ == "__main__":
     app = MinervaApp()
@@ -407,5 +310,26 @@ if __name__ == "__main__":
     pasta_geral = fr"\\cifs-zone1\tesouro\Programas da SUPCONC\logs\Programa Minerva"
     caminho_geral, caminho_erros = configurar_log("Programa Minerva", pasta_geral, pasta_erros, callback_interface=app.log)
     
-    app.protocol("WM_DELETE_WINDOW", lambda: app.safe_exit(app.limpar_recursos))
+    # Coleta automática de todo logger.error() (do app e da biblioteca) para o resumo enviado ao fechar
+    logging.getLogger("jupiter").addHandler(ColetorErros(app.erros_acumulados))
+
+    # Notificação de erros aos desenvolvedores: credenciais em config.json (gitignored).
+    # Se o arquivo faltar/estiver incompleto, a notificação apenas fica desativada.
+    try:
+        config = json.loads((Path(__file__).parent / "config.json").read_text(encoding="utf-8"))
+        app.dev_emails = config.get("desenvolvedores", [])
+        app.teams_webhook = config.get("webhook_teams") or None
+        # só cria o GraphAPI se todas as credenciais estiverem presentes
+        if all(config.get("graph_api", {}).get(k) for k in ("tenant_id", "client_id", "client_secret", "conta_corporativa")):
+            app.graph = GraphAPI(**config["graph_api"])
+    except Exception:
+        logger.warning("Notificação de erros desativada (config.json ausente ou inválido)", exc_info=True)
+
+    def ao_fechar():
+        # ao fechar a janela: envia o resumo e só então encerra liberando os recursos
+        app._enviar_resumo_erros()  # resumo dos erros acumulados na sessão (se houver)
+        app.safe_exit(app.limpar_recursos)
+
+    # liga o clique no "X" da janela à rotina de fechamento e inicia o loop da interface
+    app.protocol("WM_DELETE_WINDOW", ao_fechar)
     app.mainloop()

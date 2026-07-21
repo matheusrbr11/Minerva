@@ -1,2 +1,6 @@
-env/*
-base de dados/DAF.db
+base de dados/*
+logs/*
+*.pdf
+*__pycache__*
+config.json
+*.xlsm

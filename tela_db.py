@@ -22,14 +22,14 @@ NOMES_COLUNAS = {
 
 COLUNA_ELASTICA = "tipo_descricao"
 
-def construir_tela_db(app, programa_nome="", tipo_ids=None, pagina_inicial="contabilizados"):
+# 1. Alterado: pagina_inicial="pendentes"
+def construir_tela_db(app, programa_nome="", tipo_ids=None, pagina_inicial="pendentes"):
     tipo_ids = tipo_ids or []
 
     def _ler(query):
         try:
             with sqlite3.connect(app.DBPath) as con:
                 df = pd.read_sql_query(query, con)
-                logger.info(f"[DB] Query retornou {len(df)} registros")
                 return df
         except Exception as e:
             logger.error(f"Erro ao consultar o banco de dados: {e}", exc_info=True)
@@ -53,7 +53,6 @@ def construir_tela_db(app, programa_nome="", tipo_ids=None, pagina_inicial="cont
         """
         df = _ler(query)
         if df.empty:
-            logger.info("[DB] Tentando sem filtro de data...")
             query = f"""
                 SELECT c.num_documento    AS num_documento,
                        d.tipo_descricao   AS tipo_descricao,
@@ -154,8 +153,9 @@ def construir_tela_db(app, programa_nome="", tipo_ids=None, pagina_inicial="cont
     barra = ctk.CTkFrame(popup, fg_color=tema["bg_janela"], corner_radius=0, height=52)
     barra.pack(fill="x", padx=12, pady=(10, 0))
     barra.pack_propagate(False)
+    
     seletor = ctk.CTkSegmentedButton(
-        barra, values=[opt_contab, opt_pend], font=fonte_toggle,
+        barra, values=[opt_pend, opt_contab], font=fonte_toggle,
         height=34, command=lambda escolha: trocar_view(escolha)
     )
     seletor.pack(side="left", padx=8, pady=8)
@@ -213,7 +213,6 @@ def construir_tela_db(app, programa_nome="", tipo_ids=None, pagina_inicial="cont
             self.canvas.configure(height=400)
 
         def carregar_dados(self, df: pd.DataFrame):
-            logger.info(f"[Tabela] Carregando {len(df)} registros...")
             self.df = df.reset_index(drop=True)
             self.colunas = list(df.columns)
             self._linha_selecionada = -1
@@ -222,7 +221,6 @@ def construir_tela_db(app, programa_nome="", tipo_ids=None, pagina_inicial="cont
             self._desenhar()
 
         def _medir_texto(self, texto, fonte_tupla):
-            """Mede o texto usando a engine do Tkinter puro, igual ao que o Canvas renderiza"""
             chave = (texto, fonte_tupla)
             if chave not in self._cache_texto:
                 weight = fonte_tupla[2] if len(fonte_tupla) > 2 else "normal"
@@ -248,8 +246,6 @@ def construir_tela_db(app, programa_nome="", tipo_ids=None, pagina_inicial="cont
                 
                 largura = max(self.LARGURA_MINIMA, max(w_header, w_cells) + self.PADX_CELULA * 2 + self.RESPIRO_EXTRA)
                 self.col_widths.append(largura)
-            
-            logger.info(f"[Tabela] Larguras calculadas com precisão nativa: {self.col_widths}")
 
         def _ajustar_scrollregion(self):
             altura_total = self.ALTURA_HEADER + max(0, len(self.df)) * self.ALTURA_LINHA

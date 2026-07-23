@@ -54,7 +54,7 @@ class MinervaApp(BaseApp):
         )
         super().__init__(cfg)
         
-        self.siafeVersao = 2             # 1 = Prod | 2 = Beta
+        self.siafeVersao = 1             # 1 = Prod | 2 = Beta
         
         self.DBPath = self.cfg.base_path / "base de dados" / "DAF.db"
         self.DAFPath = self.cfg.base_path / "DAF.py"
@@ -285,7 +285,7 @@ class MinervaApp(BaseApp):
             self.messagebox_error("Erro", "Ocorreu um erro inesperado.")
 
         finally:
-            self.after(0, self.mostrar_pendentes_popup("Programa Minerva", tipo_ids, pagina_inicial="pendentes"))
+            self.after(0, self.mostrar_pendentes_popup("Programa Minerva", tipo_ids))
             if not self.stop_event:
                 logger.info("Fechando navegador.")
             if hasattr(self, 'siafe') and self.siafe.driver:
@@ -297,11 +297,11 @@ class MinervaApp(BaseApp):
     # =========================================================================
     # POPUP: CONTABILIZAÇÕES PENDENTES
     # =========================================================================
-    def mostrar_pendentes_popup(self, programa_nome, tipo_ids, pagina_inicial):
+    def mostrar_pendentes_popup(self, programa_nome, tipo_ids):
 
         # constrói e exibe o popup de consulta ao banco (código em tela_db.py)
         # programa_nome/tipo_ids definem a visão inicial (contabilizados do programa atual)
-        construir_tela_db(self, programa_nome, tipo_ids, pagina_inicial=pagina_inicial) 
+        construir_tela_db(self, programa_nome, tipo_ids) 
 
 if __name__ == "__main__":
     app = MinervaApp()

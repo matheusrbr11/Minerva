@@ -1,12 +1,12 @@
 # 🏛️ Programa Minerva
 
-> Sistema de automação contábil desenvolvido pela **Equipe de Otimização Processual (EOP/SUPCONC)** do **Tesouro do Estado do Rio de Janeiro**.
+> Sistema de automação contábil desenvolvido pela **Equipe de Otimização Processual (EOP/SUPCONFI)** do **Tesouro do Estado do Rio de Janeiro**.
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python)](https://www.python.org/)
 [![Selenium](https://img.shields.io/badge/Selenium-WebDriver-green?logo=selenium)](https://www.selenium.dev/)
 [![CustomTkinter](https://img.shields.io/badge/UI-CustomTkinter-informational)](https://github.com/TomSchimansky/CustomTkinter)
 [![SQLite](https://img.shields.io/badge/Database-SQLite-lightgrey?logo=sqlite)](https://www.sqlite.org/)
-[![Versão](https://img.shields.io/badge/Versão-2.0-orange)](.)
+[![Versão](https://img.shields.io/badge/Versão-2.1-orange)](.)
 
 ---
 
@@ -26,7 +26,7 @@
 
 ## 📖 Sobre o Projeto
 
-O **Programa Minerva** é uma ferramenta de automação desenvolvida para a **Coordenadoria de Controle e Conciliação Bancária (COOCCB)** da Superintendência de Contabilidade e Conciliação (SUPCONC), com o objetivo de automatizar a contabilização das **Guias de Recolhimento (GR)** e **Programação de Desembolso de Transferência (PD)** referentes às transferências federais recebidas pelo Estado do Rio de Janeiro.
+O **Programa Minerva** é uma ferramenta de automação desenvolvida para a **Coordenadoria de Conciliação Bancária (COOCB)** da Superintendência de Controles Financeiros (SUPCONFI), com o objetivo de automatizar a contabilização das **Guias de Recolhimento (GR)** e **Programação de Desembolso de Transferência (PD)** referentes às transferências federais recebidas pelo Estado do Rio de Janeiro.
 
 O sistema elimina a necessidade de lançamentos manuais no **SIAFE-Rio2**, reduzindo erros operacionais e o tempo gasto em tarefas repetitivas, processando automaticamente as seguintes transferências federais:
 
@@ -40,6 +40,7 @@ O sistema elimina a necessidade de lançamentos manuais no **SIAFE-Rio2**, reduz
 - CFH  - Compensação Financeira pela Utilização de Recursos Hídricos
 - CIDE - Contribuição de Intervenção no Domínio Econômico
 - ADO  - LC 176/2020
+- ISO  - Imposto Sobre o Ouro
 
 ---
 
@@ -133,8 +134,8 @@ Portal BB → [DAF.py] → demonstrativoDAF.csv
 ### 1. Clone o repositório
 
 ```bash
-git clone https://github.com/seu-usuario/minerva.git
-cd minerva
+git clone https://github.com/matheusrbr11/Minerva.git
+cd Minerva
 ```
 
 ### 2. Crie e ative um ambiente virtual
@@ -147,6 +148,10 @@ env\Scripts\activate
 
 ### 3. Instale as dependências
 
+```bash
+pip install -r requirements.txt
+```
+
 > **Dependências principais:**
 
 | Pacote | Uso |
@@ -157,7 +162,7 @@ env\Scripts\activate
 | `numpy` | Operações numéricas auxiliares |
 | `Pillow` | Carregamento de imagens na interface |
 | `office365-rest-python-client` | Integração com SharePoint |
-| `jupiter-subtes` | Biblioteca interna de automação do SIAFE-Rio2 |
+| `jupiter-subtes` | Biblioteca da EOP/SUPCONC para automação do SIAFE-Rio2 |
 
 ### 4. Execute o programa
 
@@ -176,12 +181,14 @@ minerva/
 ├── main.py                 # Aplicação principal + GUI (MinervaApp)
 ├── DAF.py                  # Download automatizado do DAF via Selenium
 ├── Extrato.py              # ETL: parse do CSV e carga no SQLite
+├── tela_db.py              # Tela de consulta/gestão do banco de dados na GUI
+├── dicts.py                # Dicionários de mapeamento de campos e roteiros contábeis
 │
 ├── base de dados/
 │   └── DAF.db              # Banco de dados SQLite
 |
 ├── dist/
-│   └── exe.exe             # atalho .exe
+│   └── exe.exe             # executável .exe
 │
 ├── img/
 │   ├── icon.ico            # Ícone do programa
@@ -190,6 +197,7 @@ minerva/
 │   └── voltar.png          # Ícone de voltar
 │
 ├── Manual de Uso.pdf       # Manual do usuário
+├── requirements.txt        # Dependências do projeto
 ├── .gitignore
 └── README.md
 ```
@@ -205,7 +213,7 @@ Abra o programa pelo atalho ou via `exe.py`. Na tela de login, insira seu **CPF*
 Na tela principal, clique em **PROCESSAR DAF**. O programa irá:
 1. Abrir o navegador Edge em modo headless
 2. Acessar o portal de arrecadação federal do Banco do Brasil
-3. Preencher automaticamente o estado (Rio de Janeiro) e o período do mês corrente
+3. Preencher automaticamente o beneficiário (Rio de Janeiro) e o período do mês corrente
 4. Baixar o arquivo `demonstrativoDAF.csv` para a pasta Downloads
 5. Processar o CSV, calcular retenções de PASEP e carregar os dados no banco de dados
 
@@ -233,9 +241,11 @@ Armazena os lançamentos a serem (ou já) contabilizados no SIAFE.
 | `valor` | TEXT | Valor monetário do lançamento |
 | `observacao` | TEXT | Descrição gerada automaticamente |
 | `num_documento` | TEXT | Número do documento no SIAFE (preenchido após contabilização) |
-| `tipo_id` | INTEGER | Identificador do tipo de transferência (1–20) |
-| `usuario` | TEXT | Login do usuário que processou |
-| `data_hora` | TEXT | Timestamp do processamento |
+| `tipo_id` | INTEGER | Identificador do tipo de transferência (1–22) |
+| `usuario_inclusao` | TEXT | Login do usuário que processou |
+| `data_hora_inclusao` | TEXT | Horário do processamento (AAAA-MM-DD HH:MM:SS) |
+| `usuario_contab` | TEXT | Login do usuário que contabilizou |
+| `data_hora_contab` | TEXT | Horário de contabilização (AAAA-MM-DD HH:MM:SS) |
 | `tempo_contab` | TEXT | Tempo de execução da contabilização |
 
 ### Tabela `daf`
@@ -253,7 +263,7 @@ Armazena os dados brutos extraídos do CSV do DAF.
 
 ## 🤝 Contribuição
 
-Este projeto é desenvolvido e mantido pela **Equipe de Otimização Processual (EOP)** da **SUPCONC – Tesouro do Estado do Rio de Janeiro**.
+Este projeto é desenvolvido e mantido pela **Equipe de Otimização Processual (EOP)** da **SUPCONFI – Tesouro do Estado do Rio de Janeiro**.
 
 Dúvidas, sugestões e reportes de inconsistências operacionais devem ser encaminhados diretamente à equipe. Em caso de mudanças nas premissas operacionais (estrutura do DAF, roteiros contábeis, contas, etc.), a equipe deve ser notificada para atualização do sistema e do manual de uso.
 
@@ -262,5 +272,5 @@ O manual de uso está arquivado no **SEI-RJ** sob o processo `SEI-040009/000183/
 ---
 
 <div align="center">
-  <sub>EOP / SUPCONC – Tesouro do Estado do Rio de Janeiro &nbsp;|&nbsp; Versão 2.0 &nbsp;|&nbsp; 09/04/2026</sub>
+  <sub>EOP / SUPCONC – Tesouro do Estado do Rio de Janeiro &nbsp;|&nbsp; Versão 2.1 &nbsp;|&nbsp; 17/08/2026</sub>
 </div>

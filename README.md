@@ -55,13 +55,13 @@ O sistema elimina a necessidade de lançamentos manuais no **SIAFE-Rio2**, reduz
 ### 2. Contabilização Automática no SIAFE-Rio2
 - Preenchimento automático de todos os campos necessários via automação no navegador
 - Suporte a dois tipos de documento:
-  - **GR** – Guia de Recolhimento (receitas orçamentárias)
-  - **PD** – Programação de Desembolso (retenção de PASEP)
+  - **GR** – Guia de Recolhimento
+  - **PD** – Programação de Desembolso de Transferência
 - Registro do número dos documentos contabilizados ao final do processo
 
 ### 3. Interface Gráfica (GUI)
 - Tela de login com autenticação via CPF e senha do SIAFE-Rio2
-- Menu principal com botões para **Processar DAF** e **Contabilizar**
+- Menu principal com botões para **Processar DAF** e **Contabilizar**, além de consulta ao **Banco de Dados**
 - Seleção do tipo de contabilização (GR ou PD)
 - Tela de execução com log em tempo real e barra de progresso
 - Acesso rápido ao Manual de Uso (F2) e à tela "Sobre" (F1)
@@ -161,7 +161,7 @@ pip install -r requirements.txt
 | `pandas` | Processamento e transformação do CSV |
 | `numpy` | Operações numéricas auxiliares |
 | `Pillow` | Carregamento de imagens na interface |
-| `office365-rest-python-client` | Integração com SharePoint |
+| `office365-rest-python-client` | Integração com SharePoint/Microsoft Graph |
 | `jupiter-subtes` | Biblioteca da EOP/SUPCONC para automação do SIAFE-Rio2 |
 
 ### 4. Execute o programa
@@ -224,7 +224,10 @@ Selecione o tipo de contabilização no menu suspenso:
 - **GR** – Para registrar as receitas (Guias de Recolhimento)
 - **PD** – Para registrar as transferências de PASEP (Programação de Desembolso)
 
-Clique em **CONTABILIZAR**. O programa abrirá o SIAFE-Rio2 e preencherá automaticamente todos os campos para cada lançamento. Ao final, o número dos documentos contabilizados será exibido no log.
+Clique em **CONTABILIZAR**. O programa abrirá o SIAFE-Rio2 e preencherá automaticamente todos os campos para cada lançamento. Ao final, o número dos documentos contabilizados será exibido no log e atualizado no banco de dados.
+
+### Passo 4 — Consultar Banco de Dados
+Clique em **BANCO DE DADOS** para abrir o popup de consulta, alternando entre lançamentos **pendentes** (todos os programas) e **contabilizados** (Programa SART).
 
 ---
 

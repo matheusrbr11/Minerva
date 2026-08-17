@@ -1,0 +1,7 @@
+customtkinter==6.0.0
+selenium==4.46.0
+pandas==3.0.3
+numpy==2.5.0
+pillow==12.3.0
+office365-rest-python-client @ git+https://github.com/vgrem/office365-rest-python-client.git
+jupiter-subtes==1.1.7
